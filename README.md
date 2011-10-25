@@ -106,6 +106,10 @@ should be possible using keywords (untested).
 
 * Proper documentation/tests.
 
+## Notes
+
+Inspired by [korma](https://github.com/ibdknox/Korma) &  [clojureQL](https://github.com/LauJensen/clojureql)
+
 ## License
 
 Copyright (C) 2011 Max Penet
