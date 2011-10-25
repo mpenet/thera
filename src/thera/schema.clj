@@ -10,7 +10,7 @@
               :exceptions {:name :string
                            :date :integer}}
 
-    :concistency {:default :ONE
+    :consistency {:default :ONE
                   :read :ANY
                   :create :QUORUM
                   :update :ALL
@@ -40,10 +40,10 @@
     (get-in columns [:exceptions name]
             (column-type this)))
 
-  (concistency [this]
+  (consistency [this]
     (:default consistency))
 
-  (concistency [this query-type]
+  (consistency [this query-type]
     (get consistency query-type (consistency this))))
 
 (defn make-schema
