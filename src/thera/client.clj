@@ -1,23 +1,25 @@
 (ns thera.client
-  ;; (:use )
-  ;; (:require )
+  (:use [thera.schema])
   (:import
-   [java.sql DriverManager PreparedStatement ResultSet]
+   [java.sql DriverManager PreparedStatement]
    [org.apache.cassandra.cql.jdbc
-    CassandraDriver
     CassandraConnection
     CResultSet]))
 
-(def defaults
-  {:host "localhost"
-   :port 9160
-   :keyspace "thera"})
+(def driver-classname "org.apache.cassandra.cql.jdbc.CassandraDriver")
+
+(defn make-jdbc-url
+  [host port keyspace]
+  (format "jdbc:cassandra://%s:%s/%s" host port keyspace))
 
 (defn ^CassandraConnection make-connection
   [conf]
-  (let [{:keys [host port keyspace]} (merge defaults conf)]
-   (DriverManager/getConnection
-    (format "jdbc:cassandra://%s:%s/%s" host port keyspace))))
+  (let [{:keys [host port keyspace]
+         :or {host "localhost"
+              port 9160
+              keyspace "thera"}} conf]
+  (DriverManager/getConnection
+   (make-jdbc-url host port keyspace))))
 
 (defn ^PreparedStatement prepare
   [^CassandraConnection connection cql-query]
@@ -26,6 +28,11 @@
 (defn ^CResultSet execute-query
   [^PreparedStatement statement]
   (.executeQuery statement))
+
+(defn transform-resultset
+  [^CResultSet resultset schema]
+  {})
+
 
 ;; (defn resultset->map [^CResultSet rs]
 ;;   (loop [amap {}]
