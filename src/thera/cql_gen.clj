@@ -3,6 +3,9 @@
   (:use [clojure.string :only [upper-case join]]))
 
 (def default-key-name "KEY")
+(def join-and (partial join " AND "))
+(def join-spaced (partial join " "))
+(def join-coma (partial join ", "))
 
 (def operators
   {:gt ">"
@@ -28,14 +31,14 @@
 
   clojure.lang.Sequential
   (encode-value [value]
-    (format "(%s)" (join ", " (map encode-value value))))
+    (format "(%s)" (join-coma (map encode-value value))))
   (encode-name [value]
-    (format "(%s)" (join ", " (map encode-name value))))
+    (format "(%s)" (join-coma (map encode-name value))))
 
   clojure.lang.IPersistentMap
   (encode-value [value]
     (->> (map (fn [[k v]] (format "%s = %s" (encode-name k) v)) value)
-        (join ", ")))
+         (join-coma)))
 
   java.lang.Object
   (encode-value [value] value)
@@ -47,24 +50,25 @@
   [_ column-family]
   (encode-name column-family))
 
-(defmethod translate :columns
+(defmethod translate :fields
   [_ [columns & [opts]]]
-  (join " "
-        [(translate :columns-options opts)
-         (translate :columns-fields columns)
-         "FROM"]))
+  (println columns)
 
-(defmethod translate :columns-fields [_ value]
+  (join-spaced
+   [(translate :fields-options opts)
+    (translate :fields-value columns)]))
+
+(defmethod translate :fields-value [_ value]
   (if (map? value)
     (let [range (:range value) ]
       (format "%s...%s"
               (-> range first encode-name)
               (-> range second encode-name)))
-    (join ", " (map name value))))
+    (join-coma (map name value))))
 
-(defmethod translate :columns-options
+(defmethod translate :fields-options
   [_ opts]
-  (join " " (filter identity (map #(apply translate %) opts))))
+  (join-spaced (filter identity (map #(apply translate %) opts))))
 
 (defmethod translate :first [_ first]
   (when first (str "FIRST " first)))
@@ -75,10 +79,10 @@
 (defmethod translate :using
   [_ args]
   (str "USING "
-       (join " AND "
-             (for [[n value] (partition 2 args)]
-               (str (-> n name upper-case)
-                    " " (encode-value value))))))
+       (join-and
+        (for [[n value] (partition 2 args)]
+          (str (-> n name upper-case)
+               " " (encode-value value))))))
 
 (defmethod translate :pk
   [_ value]
@@ -92,17 +96,21 @@
      (format "%s IN %s" pk-name (encode-value pk-value))
 
      (map? pk-value)
-     (join " AND "
-           (map (fn [[op v]]
-                  (join " " [pk-name (op operators) v]))
-                pk-value))
+     (join-and
+      (map (fn [[op v]]
+             (join-spaced [pk-name (op operators) v]))
+           pk-value))
      :else
      (str pk-name " = " (encode-value pk-value)))))
 
 (defmethod translate :where
   [_ where]
   (str "WHERE "
-       (join " " (map (fn [[k v]] (translate k v)) where))))
+       (join-and
+        (map (fn [[k v]]
+               (translate k v))
+             ;; ensure pk is first
+             (reverse (sort-by key where))))))
 
 (defmethod translate :insert-values [_ {:keys [row values]}]
   (let [[key-name key-value] [(if (= 2 (count row))
@@ -113,6 +121,10 @@
             (->> values keys (cons key-name) encode-name)
             (->> values vals (cons key-value) encode-value))))
 
+(defmethod translate :columns [_ columns]
+  (join-and (map (fn [[op k v]]
+                   (str (encode-name k) (op operators) (encode-value v)))
+                 columns)))
 
 (defmethod translate :set [_ values]
   (str "SET " (encode-value values)))
@@ -126,7 +138,7 @@
 
 (defn make-query
   [template query]
-  ;; (println "Q:" query)
+  (println "Q:" query)
   (->> (map (fn [token]
               (if (string? token)
                 token
@@ -134,4 +146,4 @@
                   (translate token value))))
             template)
        (filter identity)
-       (join " ")))
+       join-spaced))

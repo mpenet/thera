@@ -7,15 +7,19 @@
          (using  :concistency :QUORUM
                  :timestamp 123123
                  :TTL 123)
-         (columns (as-range :a :b)
+         (fields (as-range :a :b)
                   :reversed true
                   :first 100)
 
-         ;; (columns [:a :b]
+         ;; (fields [:a :b]
          ;;          :reversed true
          ;;          :first 100)
          (where
           (pk 1)
+
+          (columns [:gt "name" 2]
+                   [:eq :a "b"]
+                   [:lt :a "b"])
           ;; (pk "a")
 
           ;; (pk [1 2 "a" 4])

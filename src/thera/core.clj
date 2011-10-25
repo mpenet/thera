@@ -5,11 +5,10 @@
 
 (def apply-merge (partial apply merge))
 
-(defn columns [col-names & opts]
-  {:columns [col-names (apply array-map opts)]})
+(defn fields [col-names & opts]
+  {:fields [col-names (apply array-map opts)]})
 
-(defn as-range
-  [from to]
+(defn as-range [from to]
   {:range [from to]})
 
 (defn using [& args]
@@ -18,22 +17,22 @@
 (defn limit [n]
   {:limit n})
 
-(defn where
-  [& args]
+(defn where [& args]
   {:where
    (apply-merge args)})
 
-(defn pk
-  [& value]
+(defn pk [& value]
   {:pk value})
 
-(defn values
-  [values]
+(defn columns [& values]
+  {:columns values})
+
+(defn values [values]
   {:values values})
 
 (defn select [column-family & steps]
   (gen/make-query
-   ["SELECT" :columns "FROM" :column-family :where :using :limit]
+   ["SELECT" :fields "FROM" :column-family :where :using :limit]
    (apply-merge
     {:column-family column-family}
     steps)))
@@ -60,7 +59,7 @@
 
 (defn delete [column-family & steps]
   (gen/make-query
-   ["DELETE" :columns "FROM" :column-family :using :where]
+   ["DELETE" :fields "FROM" :column-family :using :where]
    (apply-merge
     {:column-family column-family}
     steps)))

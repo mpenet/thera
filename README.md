@@ -16,12 +16,12 @@ It is a work in progress, expect changes, bugs and improvements (see TODO).
                  :TTL 123)
 
          ;; using a column range with optional parameters first and reversed
-         (columns (as-range :a :b)
+         (fields (as-range :a :b)
                   :reversed true
                   :first 100)
 
          ;; variant using name columns
-         ;; (columns [:a :b "c" 12]
+         ;; (fields [:a :b "c" 12]
          ;;          :reversed true
          ;;          :first 100)
 
@@ -34,7 +34,6 @@ It is a work in progress, expect changes, bugs and improvements (see TODO).
 
           ;; KEY IN ...
           ;; (pk [1 2 "a" 4])
-          ;; (pk "1" [1 2 "a" 4])
 
           ;; aliased key
           ;; (pk :kalias1 1)
@@ -52,7 +51,11 @@ It is a work in progress, expect changes, bugs and improvements (see TODO).
           ;; (pk :keyalias1
           ;;     {:gt 1})
           ;; (pk :alias {:gt 1 :lt 2})
-          ))))
+
+          ;; secondary indexes
+          (columns [:gt "name" 1]
+                   [:eq "pwd" "password"]
+                   [:eq "gender" "male"])))))
 
 
 ### INSERT
