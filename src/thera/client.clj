@@ -29,41 +29,25 @@
   [^PreparedStatement statement]
   (.executeQuery statement))
 
-(defprotocol PRowCodec
-  (decode-row [this schema])
-  (decode-row-id [this schema])
-  (decode-cols [this schema])
-  )
-
-(defrecord Row [id cols]
-  PRowCodec
-  (decode-row [this schema]
-    (assoc this
-        :id (decode-row-id this schema)
-        :rows (decode-cols this schema)))
-
-  (decode-row-id [this schema]
-    (println schema)
-    (println this)
-
-
-    )
-  (decode-cols [this schema])
-  )
+(defrecord Row [id cols])
 
 (defn make-row [id cols]
   (Row. id cols))
 
-(defrecord Col [name-type name value-type value])
-(defn make-col [name-type name value-type value]
-  (Col. name-type name value-type value))
+(defrecord Col [name value])
+(defn make-col [name value]
+  (Col. name value))
 
 (defn rs-col->clj-col
-  [^TypedColumn col]
-  (make-col (.getNameType col)
-            (.getNameString col)
-            (.getValueType col)
-            (.getValue col)))
+  [^TypedColumn col schema]
+  (let [col-name-str (.getNameString col) ]
+    (make-col (decode (jdbc-types->cljk-type (.getNameType col))
+                      (column-name-type schema (keyword col-name-str))
+                      col-name-str)
+
+              (decode (jdbc-types->cljk-type (.getValueType col))
+                      (column-value-type schema)
+                      (.getValueString col)))))
 
 (defn rs->clj-row
   [^CResultSet rs schema]
@@ -73,14 +57,16 @@
                 (doall
                  (for [index (range 1 ccount)]
                    (-> (.getColumn rs index)
-                       rs-col->clj-col)))
+                       (rs-col->clj-col schema)
+                       )))
                 []))))
 
 (defn resultset->clj
   [^CResultSet resultset schema]
   (loop [rs resultset
-         response {:rows [] :meta {}}]
+         response {:rows [] :meta {} :schema schema}]
     (if (.next rs)
-      (recur rs (update-in response [:rows]
-                  #(conj % (rs->clj-row rs schema))))
+      (recur rs
+             (update-in response [:rows]
+                        #(conj % (rs->clj-row rs schema))))
       response)))

@@ -1,5 +1,4 @@
 (ns thera.test.schema
-
   (:use [thera.schema]
         [thera.client]))
 
@@ -21,4 +20,4 @@
                    (prepare "SELECT * FROM user")
                    execute-query ))
 
-(prn (thera.client/resultset->clj thera.test.schema/rs1 test-schema))
+(def t3 (thera.client/resultset->clj thera.test.schema/rs1 test-schema))

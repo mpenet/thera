@@ -6,9 +6,9 @@
     :row-key {:types [:string :string]
               :alias :foo}
 
-    :columns {:type :bytes
-              :exceptions {:name :string
-                           :date :integer}}
+    :columns {:types [:string :string]
+              :exceptions {:name [:string :integer]
+                           :date [:string :string]}}
 
     :consistency {:default :ONE
                   :read :ANY
@@ -21,7 +21,8 @@
 (defprotocol PSchema
   (row-name-type [this])
   (row-value-type [this])
-  (column-type [this] [this col-name])
+  (column-name-type [this] [this col-name])
+  (column-value-type [this] [this col-name])
   (consistency [this] [this query-type]))
 
 (defrecord Schema [name row-key columns consistency pre post]
@@ -33,12 +34,21 @@
   (row-value-type [this]
     (-> row-key :types second))
 
-  (column-type [this]
-    (:type columns))
+  (column-name-type [this]
+    (-> columns :types first))
 
-  (column-type [this name]
-    (get-in columns [:exceptions name]
-            (column-type this)))
+  (column-name-type [this name]
+    (if-let [exception (-> columns :exceptions name first)]
+      exception
+      (column-name-type this)))
+
+  (column-value-type [this]
+      (-> columns :types second))
+
+  (column-value-type [this name]
+    (if-let [exception (-> columns :exceptions name second)]
+      exception
+      (column-value-type this)))
 
   (consistency [this]
     (:default consistency))
