@@ -2,9 +2,10 @@
   (:use [thera.schema]
         [thera.client]))
 
-(def test-schema (defschema user  :row-key {:types [:string :string]}
-                   :columns {:types [:string :string]
-                             :exceptions {"pwd" :integer}}
+(def test-schema (defschema user  :row-key {:types [:utf8 :integer]}
+                   :columns {:types [:utf8 :utf8]
+                             :exceptions {"pwd" :integer
+                                          "name" :integer}}
 
                    :consistency {:default :ONE
                                  :read :ANY
@@ -13,6 +14,8 @@
                                  :delete :ANY}
                    :pre identity
                    :post identity))
+
+
 
 (def rs1 (-> (make-datasource {})
                    get-connection
