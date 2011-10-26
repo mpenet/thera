@@ -16,10 +16,9 @@
                    :pre identity
                    :post identity))
 
+(def rs1 (-> (make-datasource {})
+                   get-connection
+                   (prepare "SELECT * FROM user")
+                   execute-query ))
 
-(print (def rs1 (-> (make-datasource {})
-                    get-connection
-                    (prepare "SELECT * FROM user WHERE KEY")
-                    execute-query )))
-
-(thera.client/resultset->clj thera.test.schema/rs1 test-schema)
+(prn (thera.client/resultset->clj thera.test.schema/rs1 test-schema))

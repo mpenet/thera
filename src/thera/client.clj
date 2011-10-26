@@ -1,5 +1,5 @@
 (ns thera.client
-  (:use [thera.schema])
+  (:use [thera schema codec])
   (:import
    [java.sql DriverManager PreparedStatement]
    [org.apache.cassandra.cql.jdbc
@@ -29,7 +29,28 @@
   [^PreparedStatement statement]
   (.executeQuery statement))
 
-(defrecord Row [id cols])
+(defprotocol PRowCodec
+  (decode-row [this schema])
+  (decode-row-id [this schema])
+  (decode-cols [this schema])
+  )
+
+(defrecord Row [id cols]
+  PRowCodec
+  (decode-row [this schema]
+    (assoc this
+        :id (decode-row-id this schema)
+        :rows (decode-cols this schema)))
+
+  (decode-row-id [this schema]
+    (println schema)
+    (println this)
+
+
+    )
+  (decode-cols [this schema])
+  )
+
 (defn make-row [id cols]
   (Row. id cols))
 
@@ -45,14 +66,14 @@
             (.getValue col)))
 
 (defn rs->clj-row
-  [^CResultSet rs]
-  (let [ccount (.. rs getMetaData getColumnCount)]
-    (make-row (.getRowId rs (.getRow rs))
-              (if (> ccount 0)
-                (map (fn [index]
-                       (-> (.getColumn rs index)
-                           rs-col->clj-col))
-                     (range 1 ccount))
+  [^CResultSet rs schema]
+  (make-row (.getRowId rs (.getRow rs))
+            (let [ccount (.. rs getMetaData getColumnCount)]
+              (if (> ccount 1) ;; id count as 1 row
+                (doall
+                 (for [index (range 1 ccount)]
+                   (-> (.getColumn rs index)
+                       rs-col->clj-col)))
                 []))))
 
 (defn resultset->clj
@@ -60,10 +81,6 @@
   (loop [rs resultset
          response {:rows [] :meta {}}]
     (if (.next rs)
-      (update-in response [:rows]
-                 #(conj % (rs->clj-row rs)))
-      response)))0
-
-;; (defn execute
-;;   [^PreparedStatement statement]
-;;   (.exectute statement))
+      (recur rs (update-in response [:rows]
+                  #(conj % (rs->clj-row rs schema))))
+      response)))
