@@ -3,7 +3,7 @@
 (comment
   (defschema User
 
-    :row-key {:types [:long :string]
+    :row-key {:types [:string :string]
               :alias :foo}
 
     :columns {:type :bytes
