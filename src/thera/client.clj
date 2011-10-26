@@ -12,9 +12,9 @@
 
 (defn ^CassandraDataSource make-datasource
   [{:keys [host port keyspace]
-         :or {host "localhost"
-              port 9160
-              keyspace "thera"}}]
+    :or {host "localhost"
+         port 9160
+         keyspace "thera"}}]
   (CassandraDataSource. host port keyspace nil nil))
 
 (defn ^CassandraConnection get-connection
@@ -40,13 +40,13 @@
 
 (defn rs-col->clj-col
   [^TypedColumn col schema]
-  (let [col-name-str (.getNameString col) ]
-    (make-col (decode (jdbc-types->cljk-type (.getNameType col))
-                      (column-name-type schema (keyword col-name-str))
-                      col-name-str)
-
+  (let [col-name-str (.getNameString col)
+        col-name (decode (jdbc-types->cljk-type (.getNameType col))
+                         (column-name-type schema)
+                         col-name-str)]
+    (make-col col-name
               (decode (jdbc-types->cljk-type (.getValueType col))
-                      (column-value-type schema)
+                      (column-value-type schema col-name)
                       (.getValueString col)))))
 
 (defn rs->clj-row

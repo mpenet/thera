@@ -1,4 +1,6 @@
-(ns thera.schema)
+(ns thera.schema
+  (:use [clojure.contrib.core :only [-?>]])
+  )
 
 (comment
   (defschema User
@@ -7,8 +9,10 @@
               :alias :foo}
 
     :columns {:types [:string :string]
-              :exceptions {:name [:string :integer]
-                           :date [:string :string]}}
+              :exceptions {"date" :integer}}
+
+    ;; :columns {:types [:keyword :string]
+    ;;           :exceptions {:date :integer}}
 
     :consistency {:default :ONE
                   :read :ANY
@@ -21,7 +25,7 @@
 (defprotocol PSchema
   (row-name-type [this])
   (row-value-type [this])
-  (column-name-type [this] [this col-name])
+  (column-name-type [this])
   (column-value-type [this] [this col-name])
   (consistency [this] [this query-type]))
 
@@ -37,18 +41,12 @@
   (column-name-type [this]
     (-> columns :types first))
 
-  (column-name-type [this name]
-    (if-let [exception (-> columns :exceptions name first)]
-      exception
-      (column-name-type this)))
-
   (column-value-type [this]
-      (-> columns :types second))
+    (-> columns :types second))
 
   (column-value-type [this name]
-    (if-let [exception (-> columns :exceptions name second)]
-      exception
-      (column-value-type this)))
+     (or (-?> columns :exceptions (get name))
+        (column-value-type this)))
 
   (consistency [this]
     (:default consistency))

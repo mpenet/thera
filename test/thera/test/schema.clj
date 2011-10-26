@@ -3,9 +3,8 @@
         [thera.client]))
 
 (def test-schema (defschema user  :row-key {:types [:string :string]}
-                   :columns {:type :bytes
-                             :exceptions {:name :string
-                                          :date :integer}}
+                   :columns {:types [:string :string]
+                             :exceptions {"pwd" :integer}}
 
                    :consistency {:default :ONE
                                  :read :ANY
