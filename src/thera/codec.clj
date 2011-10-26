@@ -1,45 +1,45 @@
 (ns thera.codec
   ^{:doc "Encoding and decoding utilities."}
+  (:require [clojure.contrib.json :as cc-json])
   (import [org.apache.cassandra.cql.jdbc]))
 
-(defmulti encode (fn [from-type to-type value] [from-type to-type]))
+;; (defmulti encode (fn [from-type to-type value] [from-type to-type]))
 
-(defmethod encode [:string :text] [_ _ value])
-(defmethod encode [:number :int] [_ _ value])
-(defmethod encode [:clj :test] [_ _ value])
-(defmethod encode [:json :ascii] [_ _ value])
-
-;; etc ...
-
-;; (defmethod encode [:number :bigint] [_ value])
-;; (defmethod encode [:bytes :blob] [_ value])
-;; (defmethod encode [:boolean :boolean] [_ value])
-
-;; (defmethod encode [:number :counter] [_ value])
-;; (defmethod encode [:decimal] [_ value])
-;; (defmethod encode [:double] [_ value])
-;; (defmethod encode [:float] [_ value])
-;; (defmethod encode [:int] [_ value])
-;; (defmethod encode :text [_ value])
-;; (defmethod encode :timestamp [_ value])
-;; (defmethod encode :uuid [_ value])
-;; (defmethod encode :varchar [_ value])
-;; (defmethod encode :varint [_ value])
+;; (defmethod encode [:string :text] [_ _ value])
+;; (defmethod encode [:number :int] [_ _ value])
+;; (defmethod encode [:clj :test] [_ _ value])
+;; (defmethod encode [:json :ascii] [_ _ value])
 
 
-(defmulti decode (fn [from-type to-type value] [(class from-type) to-type]))
+(defmulti decode (fn [from-type to-type value]
+                   [from-type to-type]))
 
+;; (defmethod decode [:utf8 :string] [_ _ value]
+;;   value)
 
+(defmethod decode [:bytes :integer] [_ _ value]
+  (Integer/parseInt value))
 
-(defmethod decode [:bytes Object] [_ _ value]
-  value)
+(defmethod decode [:bytes :long] [_ _ value]
+  (Long/parseLong value))
 
-(defmethod decode [:bytes Object] [_ _ value]
-  value)
+(defmethod decode [:bytes :double] [_ _ value]
+  (Double/parseDouble value))
+
+(defmethod decode [:bytes :float] [_ _ value]
+  (Float/parseFloat value))
+
+(defmethod decode [:bytes :bool] [_ _ value]
+  (Boolean/parseBoolean value))
+
+(defmethod decode [:bytes :json] [_ _ value]
+  (cc-json/read-json value))
+
+(defmethod decode [:bytes :clj] [_ _ value]
+  (read-string value))
 
 (defmethod decode :default [_ _ value]
-  (println value)
-
+  (println "DEFAULT:" _ _ value)
   value)
 
 ;; (defmethod decode :ascii [_ _ value])
@@ -56,12 +56,6 @@
 ;; (defmethod decode :uuid [_ _ value])
 ;; (defmethod decode :varchar [_ _ value])
 ;; (defmethod decode :varint [_ _ value])
-
-;; decode from bytes/named-jdtype to clojure type
-
-;; (decode :utf8 :string value)
-;; (decode :utf8 :json value)
-;; (encode :json value)
 
 (def cljk->jdbc-types
   {:ascii        org.apache.cassandra.cql.jdbc.JdbcAscii
@@ -83,3 +77,5 @@
 (def jdbc-types->cljk-type
   (apply array-map (interleave (vals cljk->jdbc-types)
                                (keys cljk->jdbc-types))))
+
+(def jdbc-type-instance->cljk-type (comp jdbc-types->cljk-type type))

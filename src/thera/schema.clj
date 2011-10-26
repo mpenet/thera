@@ -45,7 +45,7 @@
     (-> columns :types second))
 
   (column-value-type [this name]
-     (or (-?> columns :exceptions (get name))
+    (or (-?> columns :exceptions (get name))
         (column-value-type this)))
 
   (consistency [this]

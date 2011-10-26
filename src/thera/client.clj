@@ -41,11 +41,11 @@
 (defn rs-col->clj-col
   [^TypedColumn col schema]
   (let [col-name-str (.getNameString col)
-        col-name (decode (jdbc-types->cljk-type (.getNameType col))
+        col-name (decode (jdbc-type-instance->cljk-type (.getNameType col))
                          (column-name-type schema)
                          col-name-str)]
     (make-col col-name
-              (decode (jdbc-types->cljk-type (.getValueType col))
+              (decode (jdbc-type-instance->cljk-type (.getValueType col))
                       (column-value-type schema col-name)
                       (.getValueString col)))))
 
