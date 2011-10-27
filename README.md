@@ -127,23 +127,23 @@ See [CQL doc](https://github.com/apache/cassandra/blob/trunk/doc/cql/CQL.textile
 
 ### Example
 
-(use 'thera.client)
+    (use 'thera.client)
 
-(-> (make-datasource {:keyspace "foo"})
-    get-connection
-    (prepare "SELECT * FROM bar")
-    execute-query
-    resultset->clj)
+    (-> (make-datasource {:keyspace "foo"})
+        get-connection
+        (prepare "SELECT * FROM bar")
+        execute-query
+        resultset->clj)
 
-{:rows
- [{:id #<UUID 1438fc5c-4ff6-11e0-b97f-0026c650d722>,
-   :cols
-   ({:name "age", :value 35}
-    {:name "birthdate", :value 120976}
-    {:name "id", :value #<UUID 1438fc5c-4ff6-11e0-b97f-0026c650d722>}
-    {:name "username", :value "mpenet"})}],
- :meta
- #<CResultSetMetaData org.apache.cassandra.cql.jdbc.CResultSet$CResultSetMetaData@1bb5d53a>}
+    {:rows
+     [{:id #<UUID 1438fc5c-4ff6-11e0-b97f-0026c650d722>,
+       :cols
+       ({:name "age", :value 35}
+        {:name "birthdate", :value 120976}
+        {:name "id", :value #<UUID 1438fc5c-4ff6-11e0-b97f-0026c650d722>}
+        {:name "username", :value "mpenet"})}],
+     :meta
+     #<CResultSetMetaData org.apache.cassandra.cql.jdbc.CResultSet$CResultSetMetaData@1bb5d53a>}
 
 ## INSTALLATION
 
