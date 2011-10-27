@@ -1,21 +1,20 @@
 (ns thera.client
-  (:use [thera schema codec])
-  (:import
-   [java.sql DriverManager PreparedStatement]
-   [org.apache.cassandra.cql.jdbc
-    CassandraDataSource
-    CassandraConnection
-    CResultSet
-    TypedColumn]))
+  (:import [java.sql DriverManager PreparedStatement]
+           [org.apache.cassandra.cql.jdbc
+            CassandraDataSource
+            CassandraConnection
+            CResultSet
+            TypedColumn]))
 
 (Class/forName "org.apache.cassandra.cql.jdbc.CassandraDriver")
 
 (defn ^CassandraDataSource make-datasource
-  [{:keys [host port keyspace]
-    :or {host "localhost"
-         port 9160
-         keyspace "thera"}}]
-  (CassandraDataSource. host port keyspace nil nil))
+  ([{:keys [host port keyspace]
+     :or {host "localhost"
+          port 9160
+          keyspace "thera"}}]
+     (CassandraDataSource. host port keyspace nil nil))
+  ([] (make-datasource {})))
 
 (defn ^CassandraConnection get-connection
   [^CassandraDataSource data-source]
@@ -39,34 +38,27 @@
   (Col. name value))
 
 (defn rs-col->clj-col
-  [^TypedColumn col schema]
-  (let [col-name-str (.getNameString col)
-        col-name (decode (jdbc-type-instance->cljk-type (.getNameType col))
-                         (column-name-type schema)
-                         col-name-str)]
-    (make-col col-name
-              (decode (jdbc-type-instance->cljk-type (.getValueType col))
-                      (column-value-type schema col-name)
-                      (.getValueString col)))))
+  [^TypedColumn col]
+  (make-col (.. col getNameType (compose (.. col getRawColumn name)))
+            (.getValue col)))
 
 (defn rs->clj-row
-  [^CResultSet rs schema]
-  (make-row (.getRowId rs (.getRow rs))
+  [^CResultSet rs]
+  (make-row (.getObject rs (.getRow rs))
             (let [ccount (.. rs getMetaData getColumnCount)]
               (if (> ccount 1) ;; id count as 1 row
                 (doall
                  (for [index (range 1 ccount)]
                    (-> (.getColumn rs index)
-                       (rs-col->clj-col schema)
-                       )))
+                       rs-col->clj-col)))
                 []))))
 
 (defn resultset->clj
-  [^CResultSet resultset schema]
+  [^CResultSet resultset]
   (loop [rs resultset
-         response {:rows [] :meta {} :schema schema}]
+         response {:rows [] :meta (.getMetaData resultset)}]
     (if (.next rs)
       (recur rs
              (update-in response [:rows]
-                        #(conj % (rs->clj-row rs schema))))
+                        #(conj % (rs->clj-row rs))))
       response)))
