@@ -20,7 +20,7 @@
   [^CassandraDataSource data-source]
   (.getConnection data-source))
 
-(defn ^PreparedStatement prepare
+(defn ^PreparedStatement prepare-statement
   [^CassandraConnection connection cql-query]
   (.prepareStatement connection cql-query))
 
@@ -51,14 +51,15 @@
 
 (defn rs->clj-row
   [^CResultSet rs]
-  (make-row (.getObject rs 1)
-            (let [ccount (.. rs getMetaData getColumnCount)]
-              (if (> ccount 1) ;; id count as 1 row
-                (doall
-                 (for [index (range 1 ccount)]
-                   (-> (.getColumn rs index)
-                       rs-col->clj-col)))
-                []))))
+  (make-row
+   (.getObject rs 1)
+   (let [ccount (.. rs getMetaData getColumnCount)]
+     (if (> ccount 1) ;; id count as 1 row
+       (doall
+        (for [index (range 1 (inc ccount))]
+          (-> (.getColumn rs index)
+              rs-col->clj-col)))
+       []))))
 
 (defn resultset->result
   [^CResultSet resultset]
