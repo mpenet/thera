@@ -132,7 +132,7 @@ See [CQL doc](https://github.com/apache/cassandra/blob/trunk/doc/cql/CQL.textile
     (-> (make-datasource {:keyspace "foo"})
         get-connection
         (prepare "SELECT * FROM bar")
-        execute-query
+        execute
         resultset->clj)
 
     {:rows

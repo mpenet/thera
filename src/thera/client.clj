@@ -24,12 +24,19 @@
   [^CassandraConnection connection cql-query]
   (.prepareStatement connection cql-query))
 
-(defn ^CResultSet execute-query
+(defn execute
   [^PreparedStatement statement]
-  (.executeQuery statement))
+  (.execute statement)
+  (if (= -1 (.getUpdateCount statement))
+    (.getResultSet statement)
+    statement))
+
+
+(defrecord Result [meta rows])
+(defn make-result [meta rows]
+  (Result. meta rows))
 
 (defrecord Row [id cols])
-
 (defn make-row [id cols]
   (Row. id cols))
 
@@ -44,7 +51,7 @@
 
 (defn rs->clj-row
   [^CResultSet rs]
-  (make-row (.getObject rs (.getRow rs))
+  (make-row (.getObject rs 1)
             (let [ccount (.. rs getMetaData getColumnCount)]
               (if (> ccount 1) ;; id count as 1 row
                 (doall
@@ -53,12 +60,12 @@
                        rs-col->clj-col)))
                 []))))
 
-(defn resultset->clj
+(defn resultset->result
   [^CResultSet resultset]
-  (loop [rs resultset
-         response {:rows [] :meta (.getMetaData resultset)}]
-    (if (.next rs)
-      (recur rs
-             (update-in response [:rows]
-                        #(conj % (rs->clj-row rs))))
-      response)))
+  (let [result (-> resultset .getMetaData (make-result []))]
+    (assoc result
+      :rows (loop [rs resultset
+                   rows []]
+              (if (.next rs)
+                (recur rs  (conj rows (rs->clj-row rs)))
+                rows)))))
