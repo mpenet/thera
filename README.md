@@ -106,24 +106,7 @@ should be possible using keywords (untested).
 It is still a work in progress, and is in a very rough (low level)
 state at the moment.
 
-Schema support has been droped for now since the type of the values
-can be infered from the configured types (defaults to bytebuffers if
-it s not the case), and the server converts cql query values to the
-approriate type from the configured values.
 
-See [CQL doc](https://github.com/apache/cassandra/blob/trunk/doc/cql/CQL.textile)
-
-    Term specification
-
-    Terms are used in statements to specify things such as keyspaces, column families, indexes, column names and values, and keyword arguments. The rules governing term specification are as follows:
-
-    Any single quoted string literal (example: 'apple').
-    Unquoted alpha-numeric strings that begin with a letter (example: carrot).
-    Unquoted numeric literals (example: 100).
-    UUID strings in hyphen-delimited hex notation (example: 1438fc5c-4ff6-11e0-b97f-0026c650d722).
-    Terms which do not conform to these rules result in an exception.
-
-    How column name/value terms are interpreted is determined by the configured type.
 
 ### Example
 
@@ -133,7 +116,7 @@ See [CQL doc](https://github.com/apache/cassandra/blob/trunk/doc/cql/CQL.textile
         get-connection
         (prepare-statement "SELECT * FROM bar")
         execute
-        resultset->clj)
+        (resultset->result :decoder :guess))
 
     {:rows
      [{:id #<UUID 1438fc5c-4ff6-11e0-b97f-0026c650d722>,
@@ -144,6 +127,36 @@ See [CQL doc](https://github.com/apache/cassandra/blob/trunk/doc/cql/CQL.textile
         {:name "username", :value "mpenet"})}],
      :meta
      #<CResultSetMetaData org.apache.cassandra.cql.jdbc.CResultSet$CResultSetMetaData@1bb5d53a>}
+
+There are 2 decoder availables at the moment:
+
+:bytes -> returns the raw values/name
+:guess -> guesses from schema meta-data if available
+
+and soon:
+
+:schema -> ex: (resultset->result rs :decoder :schema user-schema)
+
+### Schema
+
+    Still a work in progress
+
+    (defschema User
+      :row-key {:types [:string :string]
+                :alias :foo}
+
+      :columns {:types [:string :string]
+      :exceptions {"date" :integer}})
+
+### Extending the decoders
+
+You can add your own decoder as follows:
+
+(defmethod decode-row :mydecoder [_ ^CResultSet rs & args]
+  ;; do something fancy with the resultset and return using
+  (make-row "foo-row-name" "bar-row-key"))
+
+then (resultset->result rs :decoder :mydecoder "some" "more" "args")
 
 ## INSTALLATION
 
