@@ -45,7 +45,7 @@
 (defn make-col [name value]
   (Col. name value))
 
-(defn get-col-count
+(defn col-count
   [^CResultSet rs]
   (.. rs getMetaData getColumnCount))
 
@@ -55,7 +55,7 @@
 
 (defn map-columns
   [^CResultSet rs handler & args]
-  (let [ccount (get-col-count rs)]
+  (let [ccount (col-count rs)]
     (if (> ccount 0)
       (doall
        (for [index (range 1 (inc ccount))]
@@ -99,7 +99,7 @@
                     col-bytes-value
                     codec/bytes->hex))
          index))
-     (->> (get-col-count rs) inc (range 1)))))
+     (->> (col-count rs) inc (range 1)))))
 
 (defmulti decode-row (fn [mode & rest] mode))
 
