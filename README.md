@@ -156,7 +156,7 @@ You can add your own decoder as follows:
 
     (defmethod decode-row :mydecoder [_ ^CResultSet rs & args]
       ;; do something fancy with the resultset and return using
-      (make-row "foo-row-name" "bar-row-key"))
+      (make-row "foo-row-name" "bar-row-value"))
 
 then
 
