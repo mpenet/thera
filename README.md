@@ -134,6 +134,19 @@ There are 3 decoder availables at the moment:
 
 * :schema -> ex: (resultset->result rs :decoder :schema user-schema)
 
+
+### Extending the decoders
+
+You can add your own decoder as follows:
+
+    (defmethod decode-row :mydecoder [_ ^CResultSet rs & args]
+      ;; do something fancy with the resultset and return using
+      (make-row "foo-row-name" "bar-row-value"))
+
+then
+
+    (resultset->result rs :decoder :mydecoder "some" "more" "args")
+
 ### Schema
 
 Still a work in progress, only works for decoding at the moment.
@@ -166,17 +179,12 @@ Supported types:
 
 Defaults to :bytes
 
-### Extending the decoders
+### Extending the schema types
 
-You can add your own decoder as follows:
+    (use 'thera.codec)
 
-    (defmethod decode-row :mydecoder [_ ^CResultSet rs & args]
-      ;; do something fancy with the resultset and return using
-      (make-row "foo-row-name" "bar-row-value"))
-
-then
-
-    (resultset->result rs :decoder :mydecoder "some" "more" "args")
+    (defmethod decode :csv [_ value]
+      (you-csv-decoder-fn (String. value "UTF-8")))
 
 ## INSTALLATION
 
