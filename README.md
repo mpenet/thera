@@ -106,8 +106,6 @@ should be possible using keywords (untested).
 It is still a work in progress, and is in a very rough (low level)
 state at the moment.
 
-
-
 ### Example
 
     (use 'thera.client)
@@ -128,27 +126,45 @@ state at the moment.
      :meta
      #<CResultSetMetaData org.apache.cassandra.cql.jdbc.CResultSet$CResultSetMetaData@1bb5d53a>}
 
-There are 2 decoder availables at the moment:
+There are 3 decoder availables at the moment:
 
 * :bytes -> returns the raw values/name
 
 * :guess -> guesses from schema meta-data if available
 
-
-and soon:
-
-:schema -> ex: (resultset->result rs :decoder :schema user-schema)
+* :schema -> ex: (resultset->result rs :decoder :schema user-schema)
 
 ### Schema
 
-    Still a work in progress
+Still a work in progress, only works for decoding at the moment.
 
     (defschema User
+
+      ;; type for row-key name and value
       :row-key {:types [:string :string]
+                ;; key alias if any
                 :alias :foo}
 
+      ;; default types for all columns
       :columns {:types [:string :string]
-      :exceptions {"date" :integer}})
+                ;; column with value type different from default
+                :exceptions {"date" :integer}})
+
+This will return a schema instance that you can pass to resultset->result.
+
+Supported types:
+
+* `:string`
+* `:integer`
+* `:long`
+* `:float`
+* `:double`
+* `:json`
+* `:clj` ;; storing raw clj code as str, serialization support will come later
+* `:uuid`
+* `:bytes`
+
+Defaults to :bytes
 
 ### Extending the decoders
 
@@ -178,7 +194,7 @@ then
 
 ## Notes
 
-Inspired by [korma](https://github.com/ibdknox/Korma) & [clojureQL](https://github.com/LauJensen/clojureql)
+Inspired by [korma](https://github.com/ibdknox/Korma), [clojureQL](https://github.com/LauJensen/clojureql) and [clojure-hbase-schemas](https://github.com/compasslabs/clojure-hbase-schemas)
 
 ## License
 
