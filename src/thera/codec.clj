@@ -1,8 +1,8 @@
 (ns thera.codec
   (:require [clj-json.core :as json])
-  (:import [org.apache.cassandra.utils FBUtilities]
-           ;; soon to become [org.apache.cassandra.utils Hex]
-           ))
+  (:import
+   ;; soon to become [org.apache.cassandra.utils Hex]
+   [org.apache.cassandra.utils FBUtilities]))
 
 (def ^{:doc "We need a type object for extend-protocol"}
   byte-array-type
@@ -17,8 +17,6 @@
   [^String hex]
   (FBUtilities/hexToBytes hex))
 
-
-
 (defmulti decode (fn [type value] type))
 
 (defmethod decode :string [_ value]
@@ -28,7 +26,7 @@
   (-> value bytes->hex Integer/parseInt))
 
 (defmethod decode :long [_ value]
-  (-> value bytes->hex Long/parseLong))
+  (-> value bytes->hex (Long/parseLong 16)))
 
 (defmethod decode :float [_ value]
   (-> value bytes->hex Float/parseFloat))
@@ -43,7 +41,7 @@
   (-> value (decode :string) read-string))
 
 (defmethod decode :uuid [_ value]
-  (->> (decode :string value)
+  (->> (bytes->hex value)
        (partition 4)
        (interleave  [nil nil "-" "-" "-" "-" nil nil])
        (apply concat)

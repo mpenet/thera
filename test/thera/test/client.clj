@@ -11,6 +11,19 @@
     :columns {:types [:string :integer]
               :exceptions {"pwd" :long}}))
 
+(def sample-schema
+  (defschema sample
+    :row-key {:types [:string :uuid]
+              :alias :foo}
+
+    :columns {:types [:string :string]
+              :exceptions {"age" :integer
+                           "birthdate" :long
+                           "id" :uuid "KEY" :uuid
+                           "username" :string}}))
+
+(println sample-schema)
+
 ;; (def s (-> (make-datasource {})
 ;;              get-connection
 ;;              (prepare-statement "SELECT  * FROM user")
@@ -55,6 +68,15 @@
 
 (def s (-> (make-datasource {})
              get-connection
+             (prepare-statement "SELECT * FROM sample1")
+             execute
+             ;; (resultset->result :decoder :guess)
+             (resultset->result :decoder :schema :as sample-schema)
+
+             ))
+
+(def s (-> (make-datasource {})
+             get-connection
              (prepare-statement "SELECT * FROM sample1 LIMIT 1")
              execute
              ;; (resultset->result :decoder :guess)
@@ -62,7 +84,7 @@
 
              ))
 
-(println  s)
+
 
 
 
