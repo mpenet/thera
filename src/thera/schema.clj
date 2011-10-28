@@ -12,20 +12,20 @@
               :exceptions {"date" :integer}}))
 
 (defprotocol PSchema
-  (row-name-type [this])
-  (row-value-type [this])
+  (key-name-type [this])
+  (key-value-type [this])
   (column-name-type [this])
-  (column-value-type [this] [this col-name])
-  (consistency [this] [this query-type]))
+  (exception [this name])
+  (column-value-type [this] [this col-name]))
 
-(defrecord Schema [name row-key columns consistency pre post]
+(defrecord Schema [name row-key columns]
 
   PSchema
-  (row-name-type [this]
+  (key-name-type [this]
     (-> row-key :types first))
 
-  (row-value-type [this]
-    (-> row-key :types second))
+  (key-value-type [this]
+    (-> row-key :type second))
 
   (column-name-type [this]
     (-> columns :types first))
@@ -33,23 +33,20 @@
   (column-value-type [this]
     (-> columns :types second))
 
+  (exception [this name]
+    (-?> columns :exceptions (get name)))
+
   (column-value-type [this name]
-    (or (-?> columns :exceptions (get name))
-        (column-value-type this)))
-
-  (consistency [this]
-    (:default consistency))
-
-  (consistency [this query-type]
-    (get consistency query-type (consistency this))))
+    (or (exception this name)
+        (column-value-type this))))
 
 (defn make-schema
-  [name row-key column-type consistency pre post]
-  (Schema. name row-key column-type consistency pre post))
+  [name row-key columns]
+  (Schema. name row-key columns))
 
 (defmacro defschema
-  [name & {:keys [row-key columns consistency pre post]}]
-  `(make-schema ~(keyword name) ~row-key ~columns ~consistency ~pre ~post))
+  [name & {:keys [row-key columns]}]
+  `(make-schema ~(keyword name) ~row-key ~columns))
 
 ;; (defn transform-resultset
 ;;   [resultset schema]

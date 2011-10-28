@@ -1,5 +1,6 @@
 (ns thera.client
   (:require [thera.codec :as codec])
+  (:use [thera.schema])
   (:import [java.sql DriverManager PreparedStatement]
            [org.apache.cassandra.cql.jdbc
             CassandraDataSource
@@ -74,10 +75,23 @@
      (.. col getNameString getBytes)
      (col-bytes-value col))))
 
+(defn as-schema-col
+  [rs index schema]
+  (let [bytes-col (as-bytes-col rs index)
+        col-name (codec/decode (column-name-type schema)
+                               (:name bytes-col))]
+    (assoc bytes-col
+      :name col-name
+      :value (if-let [value-type (exception schema col-name)]
+               (codec/decode value-type
+                             (:value bytes-col))
+               (codec/decode (column-value-type schema)
+                             (:value bytes-col))))))
+
 (defn key-index
   "FIXME: that s quite an ugly way to do it .., but i dont see another way for now, it s 'guess' mode only"
   [rs row-key-bytes-value]
-  (let [pk-hex (codec/bytes->hex row-key-bytes-value) ]
+  (let [pk-hex (codec/bytes->hex row-key-bytes-value)]
     (some
      (fn [index]
        (when (= pk-hex
@@ -100,10 +114,10 @@
    (map-columns rs as-bytes-col)))
 
 (defmethod decode-row :schema [_ ^CResultSet rs & args]
-  (let [bytes-row  (decode-row :bytes rs args)]
-  )
-
-)
+  (let [schema (-> args first :as)]
+    (make-row
+     (codec/decode (key-value-type schema) (.getKey rs))
+     (map-columns rs as-schema-col schema))))
 
 (defmethod decode-row :default [_ ^CResultSet rs & args]
   (apply decode-row :guess rs args))

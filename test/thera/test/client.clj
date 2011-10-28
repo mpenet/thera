@@ -4,13 +4,12 @@
 
 
 (def user-schema
-  (defschema User
+  (defschema user
+    :row-key {:types [:string :string]
+              :alias :foo}
 
-         :row-key {:types [:string :string]
-                   :alias :foo}
-
-         :columns {:types [:string :string]
-                   :exceptions {"date" :integer}}))
+    :columns {:types [:string :integer]
+              :exceptions {"pwd" :long}}))
 
 ;; (def s (-> (make-datasource {})
 ;;              get-connection
@@ -47,10 +46,10 @@
 
 (def s (-> (make-datasource {})
              get-connection
-             (prepare-statement "SELECT pwd FROM user WHERE KEY=3")
+             (prepare-statement "SELECT * FROM user WHERE KEY=3")
              execute
              ;; (resultset->result :decoder :guess)
-             (resultset->result :decoder :bytes)
+             (resultset->result :decoder :schema :as user-schema)
 
              ))
 
@@ -59,13 +58,13 @@
              (prepare-statement "SELECT * FROM sample1 LIMIT 1")
              execute
              ;; (resultset->result :decoder :guess)
-             (resultset->result :decoder :guess)
+             (resultset->result :decoder :bytes)
 
              ))
 
 (println  s)
 
-(println  (->> s :rows first :cols  ))
+
 
 
 
