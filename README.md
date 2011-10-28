@@ -130,8 +130,10 @@ state at the moment.
 
 There are 2 decoder availables at the moment:
 
-:bytes -> returns the raw values/name
-:guess -> guesses from schema meta-data if available
+* :bytes -> returns the raw values/name
+
+* :guess -> guesses from schema meta-data if available
+
 
 and soon:
 
@@ -152,11 +154,13 @@ and soon:
 
 You can add your own decoder as follows:
 
-(defmethod decode-row :mydecoder [_ ^CResultSet rs & args]
-  ;; do something fancy with the resultset and return using
-  (make-row "foo-row-name" "bar-row-key"))
+    (defmethod decode-row :mydecoder [_ ^CResultSet rs & args]
+      ;; do something fancy with the resultset and return using
+      (make-row "foo-row-name" "bar-row-key"))
 
-then (resultset->result rs :decoder :mydecoder "some" "more" "args")
+then
+
+    (resultset->result rs :decoder :mydecoder "some" "more" "args")
 
 ## INSTALLATION
 
