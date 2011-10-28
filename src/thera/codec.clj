@@ -23,7 +23,7 @@
   (String. value "UTF-8"))
 
 (defmethod decode :integer [_ value]
-  (-> value bytes->hex Integer/parseInt))
+  (-> value bytes->hex Integer/parseInt 16))
 
 (defmethod decode :long [_ value]
   (-> value bytes->hex (Long/parseLong 16)))
