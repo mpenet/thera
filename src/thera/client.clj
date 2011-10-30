@@ -119,12 +119,7 @@
          index))
      (->> (col-count rs) inc (range 1)))))
 
-(defmulti decode-result (fn [rs mode & rest]
-                      (println rs)
-                      (println mode)
-                      (println "-------------------------")
-
-                      mode))
+(defmulti decode-result (fn [rs mode & rest] mode))
 
 (defmethod decode-result :guess
   [^CResultSet rs _ & args]
