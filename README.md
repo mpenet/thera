@@ -120,7 +120,7 @@ state at the moment.
         get-connection
         (prepare-statement "SELECT * FROM bar")
         execute
-        (resultset->result :decoder :guess))
+        (decode-result :guess))
 
     {:rows
      [{:id #<UUID 1438fc5c-4ff6-11e0-b97f-0026c650d722>,
@@ -138,20 +138,24 @@ There are 3 decoder availables at the moment:
 
 * :guess -> guesses from schema meta-data if available
 
-* :schema -> ex: (resultset->result rs :decoder :schema user-schema)
+* :schema -> ex: (decode-result :schema user-schema)
 
 
 ### Extending the decoders
 
 You can add your own decoder as follows:
 
-    (defmethod decode-row :mydecoder [_ ^CResultSet rs & args]
-      ;; do something fancy with the resultset and return using
-      (make-row [{:name "foo-row-name" :value "bar-row-value"} {...} ...]]))
+    (defmethod decode-result :mydecoder
+      [^CResultSet rs _ & args]
+      (assoc
+        (make-result
+           (map-rows rs
+                     #(make-row
+                       (my-row-key-fn %)
+                       (map-columns % as-something-col-fn)))
+           (rs-meta rs))
+           :another-field ['foo]))
 
-then
-
-    (resultset->result rs :decoder :mydecoder "some" "more" "args")
 
 ### Schema
 

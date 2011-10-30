@@ -15,7 +15,7 @@
     (-> row-key :types first))
 
   (key-value-type [this]
-    (-> row-key :type second))
+    (-> row-key :types second))
 
   (column-name-type [this]
     (-> columns :types first))

@@ -5,7 +5,7 @@
 
 (def user-schema
   (defschema user
-    :row-key {:types [:string :string]
+    :row-key {:types [:string :integer]
               :alias :foo}
 
     :columns {:types [:string :integer]
@@ -19,10 +19,10 @@
     :columns {:types [:string :string]
               :exceptions {"age" :integer
                            "birthdate" :long
-                           "id" :uuid "KEY" :uuid
+                           "id" :uuid
+                           "KEY" :uuid
                            "username" :string}}))
 
-(println sample-schema)
 
 ;; (def s (-> (make-datasource {})
 ;;              get-connection
@@ -57,21 +57,23 @@
 ;;              ))
 
 
+
+
 (def s (-> (make-datasource {})
              get-connection
              (prepare-statement "SELECT * FROM user WHERE KEY=3")
              execute
              ;; (resultset->result :decoder :guess)
-             (resultset->result :decoder :schema :as user-schema)
+             (decode-result :schema user-schema)))
 
-             ))
+;; (println (-> s :rows first :cols first :value type))
 
 (def s (-> (make-datasource {})
              get-connection
              (prepare-statement "SELECT * FROM sample1")
              execute
              ;; (resultset->result :decoder :guess)
-             (resultset->result :decoder :schema :as sample-schema)
+             (decode-result :guess)
 
              ))
 
@@ -80,8 +82,7 @@
              (prepare-statement "SELECT * FROM sample1 LIMIT 1")
              execute
              ;; (resultset->result :decoder :guess)
-             (resultset->result :decoder :bytes)
-
+             (decode-result :bytes)
              ))
 
 

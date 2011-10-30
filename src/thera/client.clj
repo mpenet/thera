@@ -1,12 +1,12 @@
 (ns thera.client
   (:require [thera.codec :as codec])
+
   (:use [thera.schema])
+
   (:import [java.sql DriverManager PreparedStatement]
            [org.apache.cassandra.cql.jdbc
-            CassandraDataSource
-            CassandraConnection
-            CResultSet
-            TypedColumn]))
+            CassandraDataSource CassandraConnection CResultSet
+            TypedColumn CResultSet$CResultSetMetaData]))
 
 (Class/forName "org.apache.cassandra.cql.jdbc.CassandraDriver")
 
@@ -45,13 +45,32 @@
 (defn make-col [name value]
   (Col. name value))
 
-(defn col-count
+(defn ^CResultSet$CResultSetMetaData rs-meta
   [^CResultSet rs]
-  (.. rs getMetaData getColumnCount))
+  (.getMetaData rs))
+
+(defn ^Integer col-count
+  [^CResultSet rs]
+  (.getColumnCount (rs-meta rs)))
+
+(defn ^TypedColumn typed-col
+  [^CResultSet rs ^Integer index]
+  (.getColumn rs index))
 
 (defn col-bytes-value
   [^TypedColumn col]
   (.. col getRawColumn getValue))
+
+(defn ^"[B" row-key
+  [^CResultSet rs]
+  (.getKey rs))
+
+(defn map-rows
+  [^CResultSet rs func]
+  (loop [rows []]
+    (if (.next rs)
+      (recur (conj rows (func rs)))
+      rows)))
 
 (defn map-columns
   [^CResultSet rs handler & args]
@@ -64,13 +83,13 @@
 
 (defn as-guess-col
   [^CResultSet rs index]
-  (let [^TypedColumn col (.getColumn rs index)]
+  (let [^TypedColumn col (typed-col rs index)]
     (make-col (.. col getNameType (compose (.. col getRawColumn name)))
               (.getValue col))))
 
 (defn as-bytes-col
   [rs index]
-  (let [^TypedColumn col (.getColumn rs index)]
+  (let [^TypedColumn col (typed-col rs index)]
     (make-col
      (.. col getNameString getBytes)
      (col-bytes-value col))))
@@ -88,51 +107,54 @@
                (codec/decode (column-value-type schema)
                              (:value bytes-col))))))
 
-(defn key-index
-  "FIXME: that s quite an ugly way to do it .., but i dont see another way for now, it s 'guess' mode only"
+(defn- key-index
   [rs row-key-bytes-value]
   (let [pk-hex (codec/bytes->hex row-key-bytes-value)]
     (some
      (fn [index]
        (when (= pk-hex
-                (-> (.getColumn rs index)
+                (-> (typed-col rs index)
                     col-bytes-value
                     codec/bytes->hex))
          index))
      (->> (col-count rs) inc (range 1)))))
 
-(defmulti decode-row (fn [mode & rest] mode))
+(defmulti decode-result (fn [rs mode & rest]
+                      (println rs)
+                      (println mode)
+                      (println "-------------------------")
 
-(defmethod decode-row :guess
-  [_ ^CResultSet rs & args]
-  (make-row
-   (.getObject rs (key-index rs (.getKey rs)))
-   (map-columns rs as-guess-col)))
+                      mode))
 
-(defmethod decode-row :bytes
-  [_ ^CResultSet rs & args]
-  (make-row
-   (.getKey rs)
-   (map-columns rs as-bytes-col)))
+(defmethod decode-result :guess
+  [^CResultSet rs _ & args]
+  (let [key-index-m (memoize key-index)]
+    (make-result
+     (map-rows rs
+               #(make-row
+                 (^Object .getObject ^CResultSet % ^Integer (key-index-m % (row-key %)))
+                 (map-columns % as-guess-col)))
+     (rs-meta rs))))
 
-(defmethod decode-row :schema
-  [_ ^CResultSet rs & args]
-  (let [schema (-> args first :as)]
-    (make-row
-     (codec/decode (key-value-type schema) (.getKey rs))
-     (map-columns rs as-schema-col schema))))
+(defmethod decode-result :bytes
+  [^CResultSet rs _ & args]
+  (make-result
+   (map-rows rs
+             #(make-row
+               (row-key %)
+               (map-columns % as-bytes-col)))
+   (rs-meta rs)))
 
-(defmethod decode-row :default
-  [_ ^CResultSet rs & args]
-  (apply decode-row :guess rs args))
+(defmethod decode-result :schema
+  [^CResultSet rs _ & [schema]]
+  (let [k-vtype (key-value-type schema)]
+    (make-result
+     (map-rows rs
+               #(make-row
+                 (codec/decode k-vtype (row-key %))
+                 (map-columns % as-schema-col schema)))
+     (rs-meta rs))))
 
-(defn resultset->result
-  [^CResultSet resultset & {:keys [decoder] :as args}]
-  (let [result (-> resultset .getMetaData (make-result []))
-        row-decoder (partial decode-row decoder)]
-    (assoc result
-      :rows (loop [rs resultset
-                   rows []]
-              (if (.next rs)
-                (recur rs  (conj rows (row-decoder rs args)))
-                rows)))))
+(defmethod decode-result :default
+  [^CResultSet rs _ & args]
+  (decode-result rs :guess args))
