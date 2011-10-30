@@ -124,8 +124,8 @@ should be possible using keywords (untested).
 
 ## CLIENT
 
-It is still a work in progress, and is in a very rough (low level)
-state at the moment.
+It uses Cassandra Jdbc driver and provides the basic building blocks to
+something more idiomatic that will come later.
 
 ### Example
 
@@ -174,7 +174,7 @@ You can add your own decoder as follows:
 
 ### Schema
 
-Still a work in progress, only works for decoding at the moment.
+It is used for decoding only at the moment.
 
     (defschema User
 
@@ -198,7 +198,7 @@ Supported types:
 * `:float`
 * `:double`
 * `:json`
-* `:clj` ;; storing raw clj code as str, serialization support will come later
+* `:clj` ;; storing raw clj code as str, Serialize support will come later
 * `:uuid`
 * `:bytes`
 
@@ -222,6 +222,8 @@ Defaults to :bytes
 * Counters support
 
 * DDL (CREATE, ALTER, TRUNCATE, DROP)
+
+* Higher level api for Schema based use (CRUD and later Schema syncronisation with server)
 
 * Proper documentation/tests.
 
