@@ -1,6 +1,6 @@
 # Thera
 
-Extensible Clojure CQL DSL + Client with Schema support.
+Extensible Cassandra CQL DSL + Client with Schema support.
 
 It is a work in progress, expect bugs, missing features and headaches.
 
