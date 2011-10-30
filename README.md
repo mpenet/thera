@@ -1,10 +1,25 @@
 # Thera
 
-Simple and extensible Clojure DSL to generate Cassandra CQL 2.0 queries.
-Includes a basic client.
+Extensible Clojure CQL DSL + Client with Schema support.
 
-At the moment it supports CRUD operations including the BATCH command.
-It is a work in progress, expect changes, bugs and improvements (see TODO).
+It is a work in progress, expect bugs, missing features and headaches.
+
+## Goal / Why
+
+Provide a CQL based client for Cassandra, without having to deal with
+Thrift history from the java client libraries out there (the Cassandra
+maintainers said that removing Thrift as a requirement is a
+longer-term goal).
+
+This is also the occasion to have some fun with a DSL, Cassandra
+capabilities, and help the Cassandra maintainers finding/fixing bugs
+at this early stage of CQL.
+
+It is worth noting that CQL is quite young and doens't support 100% of
+cassandra current features, ex: no support for super columns, but
+compound columns will be available in the (hopefully near) future and
+should be better in this regard, instead of a two-deep structure, you
+can have one of arbitrary depth.
 
 ## Usage
 
