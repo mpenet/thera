@@ -1,15 +1,5 @@
 (ns thera.schema
-  (:use [clojure.contrib.core :only [-?>]])
-  )
-
-(comment
-  (defschema User
-
-    :row-key {:types [:string :string]
-              :alias :foo}
-
-    :columns {:types [:string :string]
-              :exceptions {"date" :integer}}))
+  (:use [clojure.contrib.core :only [-?>]]))
 
 (defprotocol PSchema
   (key-name-type [this])
@@ -47,12 +37,3 @@
 (defmacro defschema
   [name & {:keys [row-key columns]}]
   `(make-schema ~(keyword name) ~row-key ~columns))
-
-;; (defn transform-resultset
-;;   [resultset schema]
-;;   (update-in [:rows]
-;;              (fn [row]
-
-;;                )
-;; )
-;;   )

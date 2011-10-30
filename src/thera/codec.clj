@@ -19,28 +19,36 @@
 
 (defmulti decode (fn [type value] type))
 
-(defmethod decode :string [_ value]
+(defmethod decode :string
+  [_ value]
   (String. value "UTF-8"))
 
-(defmethod decode :integer [_ value]
+(defmethod decode :integer
+  [_ value]
   (-> value bytes->hex (Integer/parseInt 16)))
 
-(defmethod decode :long [_ value]
+(defmethod decode :long
+  [_ value]
   (-> value bytes->hex (Long/parseLong 16)))
 
-(defmethod decode :float [_ value]
+(defmethod decode :float
+  [_ value]
   (-> value bytes->hex Float/parseFloat))
 
-(defmethod decode :double [_ value]
+(defmethod decode :double
+  [_ value]
   (-> value bytes->hex Double/parseDouble))
 
-(defmethod decode :json [_ value]
+(defmethod decode :json
+  [_ value]
   (-> value (decode :string) (json/parse-string true)))
 
-(defmethod decode :clj [_ value]
+(defmethod decode :clj
+  [_ value]
   (-> value (decode :string) read-string))
 
-(defmethod decode :uuid [_ value]
+(defmethod decode :uuid
+  [_ value]
   (->> (bytes->hex value)
        (partition 4)
        (interleave  [nil nil "-" "-" "-" "-" nil nil])

@@ -26,6 +26,12 @@ It is a work in progress, expect changes, bugs and improvements (see TODO).
          ;;          :reversed true
          ;;          :first 100)
 
+         ;; if you dont provide a "fields" fn it will default to *
+
+         ;; count()
+         (fields ["count()"])
+
+
          (where
 
          ;; the row key can be provided in different formats or can be a filter on keys
@@ -194,9 +200,9 @@ Defaults to :bytes
 
 ## TODO
 
-* Add CQL Function (count()), wildcards and counters support.
+* Counters support
 
-* Administrative commands support (CREATE, ALTER, TRUNCATE, DROP)
+* DDL (CREATE, ALTER, TRUNCATE, DROP)
 
 * Proper documentation/tests.
 

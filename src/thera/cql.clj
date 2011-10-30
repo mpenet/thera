@@ -56,7 +56,8 @@
    [(translate :fields-options opts)
     (translate :fields-value columns)]))
 
-(defmethod translate :fields-value [_ value]
+(defmethod translate :fields-value
+  [_ value]
   (if (map? value)
     (let [range (:range value) ]
       (format "%s...%s"
@@ -71,7 +72,8 @@
 (defmethod translate :first [_ first]
   (when first (str "FIRST " first)))
 
-(defmethod translate :reversed [_ reversed]
+(defmethod translate :reversed
+  [_ reversed]
   (when reversed "REVERSED"))
 
 (defmethod translate :using

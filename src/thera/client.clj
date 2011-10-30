@@ -103,23 +103,27 @@
 
 (defmulti decode-row (fn [mode & rest] mode))
 
-(defmethod decode-row :guess [_ ^CResultSet rs & args]
+(defmethod decode-row :guess
+  [_ ^CResultSet rs & args]
   (make-row
    (.getObject rs (key-index rs (.getKey rs)))
    (map-columns rs as-guess-col)))
 
-(defmethod decode-row :bytes [_ ^CResultSet rs & args]
+(defmethod decode-row :bytes
+  [_ ^CResultSet rs & args]
   (make-row
    (.getKey rs)
    (map-columns rs as-bytes-col)))
 
-(defmethod decode-row :schema [_ ^CResultSet rs & args]
+(defmethod decode-row :schema
+  [_ ^CResultSet rs & args]
   (let [schema (-> args first :as)]
     (make-row
      (codec/decode (key-value-type schema) (.getKey rs))
      (map-columns rs as-schema-col schema))))
 
-(defmethod decode-row :default [_ ^CResultSet rs & args]
+(defmethod decode-row :default
+  [_ ^CResultSet rs & args]
   (apply decode-row :guess rs args))
 
 (defn resultset->result
