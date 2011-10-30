@@ -1,4 +1,4 @@
-(ns thera.cql-gen
+(ns thera.cql
   ^{:doc "Query maps to CQL transformations"}
   (:use [clojure.string :only [upper-case join]]))
 
@@ -52,8 +52,6 @@
 
 (defmethod translate :fields
   [_ [columns & [opts]]]
-  (println columns)
-
   (join-spaced
    [(translate :fields-options opts)
     (translate :fields-value columns)]))
@@ -64,7 +62,7 @@
       (format "%s...%s"
               (-> range first encode-name)
               (-> range second encode-name)))
-    (join-coma (map name value))))
+    (join-coma (map encode-name value))))
 
 (defmethod translate :fields-options
   [_ opts]
@@ -138,7 +136,7 @@
 
 (defn make-query
   [template query]
-  (println "Q:" query)
+;;  (println "Q:" query)
   (->> (map (fn [token]
               (if (string? token)
                 token

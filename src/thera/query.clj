@@ -1,7 +1,7 @@
-(ns thera.core
+(ns thera.query
   "Simple DSL to generate Cassandra CQL queries
    https://github.com/apache/cassandra/blob/trunk/doc/cql/CQL.textile"
-  (:require [thera.cql-gen :as gen]))
+  (:require [thera.cql :as cql]))
 
 (def apply-merge (partial apply merge))
 
@@ -31,15 +31,16 @@
   {:values values})
 
 (defn select [column-family & steps]
-  (gen/make-query
+  (cql/make-query
    ["SELECT" :fields "FROM" :column-family :where :using :limit]
    (apply-merge
     {:column-family column-family}
+    {:fields ["*"]}
     steps)))
 
 (defn insert [column-family & steps]
   (let [steps-map (apply-merge steps)]
-    (gen/make-query
+    (cql/make-query
      ["INSERT INTO" :column-family :insert-values :using]
      (merge
       {:column-family column-family
@@ -50,7 +51,7 @@
 
 (defn update [column-family & steps]
   (let [step-map (apply-merge steps)]
-    (gen/make-query
+    (cql/make-query
      ["UPDATE" :column-family :using :set :where]
      (apply-merge
       {:column-family column-family}
@@ -58,7 +59,7 @@
       {:set (:values step-map)}))))
 
 (defn delete [column-family & steps]
-  (gen/make-query
+  (cql/make-query
    ["DELETE" :fields "FROM" :column-family :using :where]
    (apply-merge
     {:column-family column-family}
@@ -66,7 +67,7 @@
 
 (defn batch
   [& args]
-  (gen/make-query
+  (cql/make-query
    ["BATCH BEGIN" :using :queries "APPLY BATCH"]
    (reduce
     (fn [acc arg]
