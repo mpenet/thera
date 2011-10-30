@@ -53,6 +53,5 @@
        (partition 4)
        (interleave  [nil nil "-" "-" "-" "-" nil nil])
        (apply concat)
-       (apply str)))
-
-(defmethod decode :default [_ value] value)
+       (apply str)
+       java.util.UUID/fromString))

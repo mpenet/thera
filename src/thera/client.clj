@@ -33,9 +33,9 @@
     (.getResultSet statement)
     statement))
 
-(defrecord Result [meta rows])
-(defn make-result [meta rows]
-  (Result. meta rows))
+(defrecord Result [rows meta])
+(defn make-result [rows meta]
+  (Result. rows meta))
 
 (defrecord Row [id cols])
 (defn make-row [id cols]
