@@ -151,9 +151,9 @@ There are 3 decoder availables at the moment:
 
 * :bytes -> returns the raw values/name
 
-* :guess -> guesses from schema meta-data if available
+* :server-schema -> gets types for keys/values from schema meta-data if available
 
-* :schema -> ex: (decode-result :schema user-schema)
+* :schema -> local schema, see below, ex: (decode-result :schema user-schema)
 
 
 ### Extending the decoders
@@ -174,33 +174,30 @@ You can add your own decoder as follows:
 
 ### Schema
 
-It is used for decoding only at the moment.
+It is used for decoding only at the moment, mainly when you dont have
+a server-schema defined already (then server-schema mode is better
+suited).
+
+In the near future there will be only 1 schema type and syncronisation
+with server schema from the client definitions, including other options.
 
     (defschema User
 
       ;; type for row-key name and value
-      :row-key {:types [:string :string]
+      :row-key {:types [:utf-8 :integer]
                 ;; key alias if any
                 :alias :foo}
 
       ;; default types for all columns
-      :columns {:types [:string :string]
+      :columns {:types [:utf-8 :string]
                 ;; column with value type different from default
                 :exceptions {"date" :integer}})
 
-This will return a schema instance that you can pass to resultset->result.
+This will return a schema instance that you can pass to decode.
 
 Supported types:
 
-* `:string`
-* `:integer`
-* `:long`
-* `:float`
-* `:double`
-* `:json`
-* `:clj` ;; storing raw clj code as str, Serialize support will come later
-* `:uuid`
-* `:bytes`
+`:utf-8` `:ascii` `:boolean` `:integer` `:int32` `:decimal`  `:long` `:float` `:double` `:json` `:clj` `:bytes` `:counter`  `:date`  `:uuid`   `:lexical-uuid`  `:time-uuid`
 
 Defaults to :bytes
 

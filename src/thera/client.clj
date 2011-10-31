@@ -127,7 +127,10 @@
     (make-result
      (map-rows rs
                #(make-row
-                 (^Object .getObject ^CResultSet % ^Integer (key-index-m % (row-key %)))
+                 (^Object .getObject
+                          ^CResultSet %
+                          ^Integer
+                          (key-index-m % (row-key %)))
                  (map-columns % as-serv-schema-col)))
      (rs-meta rs))))
 
