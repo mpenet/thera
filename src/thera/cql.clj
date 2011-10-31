@@ -52,7 +52,8 @@
 
 (defmethod translate :fields
   [_ args]
-  (let [[columns opts] (if (vector? (first args))
+  (let [[columns opts] (if (or (vector? (first args))
+                               (map? (first args)))
                          [(first args) (rest args)]
                          [nil args])]
     (->> [(when (seq opts) (translate :fields-options (apply array-map opts)))
@@ -142,7 +143,7 @@
 
 (defn make-query
   [template query]
-;;  (println "Q:" query)
+  (println "Q:" query)
   (->> (map (fn [token]
               (if (string? token)
                 token

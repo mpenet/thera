@@ -19,7 +19,13 @@
          (select :foo
                  (fields [:bar "baz"]
                          :reversed true
-                         :first 100)))))
+                         :first 100))))
+
+  (is (= "SELECT count() FROM foo"
+         (select :foo (fields ["count()"]))))
+
+  (is (= "SELECT a...b FROM foo"
+         (select :foo (fields (as-range :a :b))))))
 
 (deftest using-query
   (is (= "SELECT * FROM foo USING CONCISTENCY QUORUM AND TIMESTAMP 123123 AND TTL 123"
