@@ -5,8 +5,8 @@
 
 (def apply-merge (partial apply merge))
 
-(defn fields [col-names & opts]
-  {:fields [col-names (apply array-map opts)]})
+(defn fields [& fields]
+  {:fields fields})
 
 (defn as-range [from to]
   {:range [from to]})
@@ -35,7 +35,7 @@
    ["SELECT" :fields "FROM" :column-family :where :using :limit]
    (apply-merge
     {:column-family column-family
-     :fields ["*"]}
+     :fields [["*"]]}
     steps)))
 
 (defn insert [column-family & steps]
@@ -68,7 +68,7 @@
 (defn batch
   [& args]
   (cql/make-query
-   ["BATCH BEGIN" :using :queries "APPLY BATCH"]
+   ["BATCH BEGIN\n" :using :queries "\nAPPLY BATCH"]
    (reduce
     (fn [acc arg]
       (if (map? arg)

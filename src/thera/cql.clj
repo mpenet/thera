@@ -37,7 +37,7 @@
 
   clojure.lang.IPersistentMap
   (encode-value [value]
-    (->> (map (fn [[k v]] (format "%s = %s" (encode-name k) v)) value)
+    (->> (map (fn [[k v]] (format "%s = %s" (encode-name k) (encode-value v))) value)
          (join-coma)))
 
   java.lang.Object
@@ -51,15 +51,18 @@
   (encode-name column-family))
 
 (defmethod translate :fields
-  [_ [columns & [opts]]]
+  [_ args]
+  (let [[columns opts] (if (vector? (first args))
+                         [(first args) (rest args)]
+                         [[] args])]
   (join-spaced
-   [(translate :fields-options opts)
-    (translate :fields-value columns)]))
+   [(translate :fields-options (apply array-map opts))
+    (translate :fields-value columns)])))
 
 (defmethod translate :fields-value
   [_ value]
   (if (map? value)
-    (let [range (:range value) ]
+    (let [range (:range value)]
       (format "%s...%s"
               (-> range first encode-name)
               (-> range second encode-name)))
