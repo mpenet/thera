@@ -1,6 +1,7 @@
 (ns thera.codec
   (:require [clj-json.core :as json])
   (:import
+   [java.nio HeapByteBuffer]
    [org.apache.cassandra.cql.jdbc
     JdbcAscii JdbcUTF8 JdbcInteger JdbcInt32 JdbcLong JdbcDouble JdbcFloat
     JdbcBytes JdbcCounterColumn JdbcDecimal JdbcUUID JdbcLexicalUUID
@@ -8,81 +9,81 @@
    [org.apache.cassandra.utils ByteBufferUtil]))
 
 (defn hex->bytes
-  [^String hex]
+  [hex]
   (ByteBufferUtil/hexToBytes hex))
 
-(defn ^String bytes->hex
+(defn bytes->hex
   [bytes]
   (ByteBufferUtil/bytesToHex bytes))
 
-(defmulti decode (fn [type value] type))
+(defmulti decode (fn [type ^HeapByteBuffer value] type))
 
 (defmethod decode :ascii
-  [_ value]
+  [_ ^HeapByteBuffer value]
   (.. JdbcAscii/instance (compose value)))
 
 (defmethod decode :utf-8
-  [_ value]
+  [_ ^HeapByteBuffer value]
   (.. JdbcUTF8/instance (compose value)))
 
 (defmethod decode :integer
-  [_ value]
+  [_ ^HeapByteBuffer value]
   (.. JdbcInteger/instance (compose value)))
 
 (defmethod decode :int32
-  [_ value]
+  [_ ^HeapByteBuffer value]
   (.. JdbcInt32/instance (compose value)))
 
 (defmethod decode :long
-  [_ value]
+  [_ ^HeapByteBuffer value]
   (.. JdbcLong/instance (compose value)))
 
 (defmethod decode :float
-  [_ value]
+  [_ ^HeapByteBuffer value]
   (.. JdbcFloat/instance (compose value)))
 
 (defmethod decode :double
-  [_ value]
+  [_ ^HeapByteBuffer value]
   (.. JdbcDouble/instance (compose value)))
 
 (defmethod decode :bytes
-  [_ value]
+  [_ ^HeapByteBuffer value]
   (.. JdbcBytes/instance (compose value)))
 
 (defmethod decode :counter
-  [_ value]
+  [_ ^HeapByteBuffer value]
   (.. JdbcCounterColumn/instance (compose value)))
 
 (defmethod decode :decimal
-  [_ value]
+  [_ ^HeapByteBuffer value]
   (.. JdbcDecimal/instance (compose value)))
 
 (defmethod decode :uuid
-  [_ value]
+  [_ ^HeapByteBuffer value]
   (.. JdbcUUID/instance (compose value)))
 
 (defmethod decode :lexical-uuid
-  [_ value]
+  [_ ^HeapByteBuffer value]
   (.. JdbcLexicalUUID/instance (compose value)))
 
 (defmethod decode :time-uuid
-  [_ value]
+  [_ ^HeapByteBuffer value]
   (.. JdbcTimeUUID/instance (compose value)))
 
 (defmethod decode :date
-  [_ value]
+  [_ ^HeapByteBuffer value]
   (.. JdbcDate/instance (compose value)))
 
 (defmethod decode :bool
-  [_ value]
+  [_ ^HeapByteBuffer value]
   (.. JdbcBoolean/instance (compose value)))
 
 (defmethod decode :json
-  [_ value]
+  [_ ^HeapByteBuffer value]
   (-> value (decode :utf-8) (json/parse-string true)))
 
 (defmethod decode :clj
-  [_ value]
+  [_ ^HeapByteBuffer value]
   (-> value (decode :utf-8) read-string))
 
 
