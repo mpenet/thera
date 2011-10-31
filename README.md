@@ -135,7 +135,7 @@ something more idiomatic that will come later.
         get-connection
         (prepare-statement "SELECT * FROM bar")
         execute
-        (decode-result :guess))
+        (decode-result :server-schema))
 
     {:rows
      [{:id #<UUID 1438fc5c-4ff6-11e0-b97f-0026c650d722>,
@@ -151,10 +151,9 @@ There are 3 decoder availables at the moment:
 
 * :bytes -> returns the raw values/name
 
-* :server-schema -> gets types for keys/values from schema meta-data if available
+* :server-schema -> gets types for keys/values from schema meta-data on the server
 
-* :schema -> local schema, see below, ex: (decode-result :schema user-schema)
-
+* :client-schema -> local schema, see below, ex: (decode-result :schema user-schema)
 
 ### Extending the decoders
 
