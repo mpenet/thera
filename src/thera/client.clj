@@ -63,7 +63,7 @@
 
 (defn ^"[B" row-key
   [^CResultSet rs]
-  (.getKey rs))
+  (java.nio.ByteBuffer/wrap (.getKey rs)))
 
 (defn map-rows
   [^CResultSet rs func]
@@ -81,7 +81,7 @@
          (apply handler rs index args)))
       [])))
 
-(defn as-guess-col
+(defn as-serv-schema-col
   [^CResultSet rs index]
   (let [^TypedColumn col (typed-col rs index)]
     (make-col (.. col getNameType (compose (.. col getRawColumn name)))
@@ -91,8 +91,8 @@
   [rs index]
   (let [^TypedColumn col (typed-col rs index)]
     (make-col
-     (.. col getNameString getBytes)
-     (col-bytes-value col))))
+     (.. col getRawColumn name)
+     (.. col getRawColumn value))))
 
 (defn as-schema-col
   [rs index schema]
@@ -121,14 +121,14 @@
 
 (defmulti decode-result (fn [rs mode & rest] mode))
 
-(defmethod decode-result :guess
+(defmethod decode-result :server-schema
   [^CResultSet rs _ & args]
   (let [key-index-m (memoize key-index)]
     (make-result
      (map-rows rs
                #(make-row
                  (^Object .getObject ^CResultSet % ^Integer (key-index-m % (row-key %)))
-                 (map-columns % as-guess-col)))
+                 (map-columns % as-serv-schema-col)))
      (rs-meta rs))))
 
 (defmethod decode-result :bytes
@@ -140,7 +140,7 @@
                (map-columns % as-bytes-col)))
    (rs-meta rs)))
 
-(defmethod decode-result :schema
+(defmethod decode-result :client-schema
   [^CResultSet rs _ & [schema]]
   (let [k-vtype (key-value-type schema)]
     (make-result
@@ -152,4 +152,4 @@
 
 (defmethod decode-result :default
   [^CResultSet rs _ & args]
-  (decode-result rs :guess args))
+  (decode-result rs :server-schema args))
