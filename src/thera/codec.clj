@@ -12,6 +12,10 @@
   [^String hex]
   (FBUtilities/hexToBytes hex))
 
+(defn ^String bytes->hex
+  [^"[B" bytes]
+  (FBUtilities/bytesToHex bytes))
+
 (defmulti decode (fn [type value] type))
 
 (defmethod decode :ascii
@@ -81,3 +85,32 @@
 (defmethod decode :clj
   [_ value]
   (-> value (decode :utf-8) read-string))
+
+
+;; (defmulti encode (fn [type value] type))
+
+;; (defmethod encode :string
+;;   [_ value]
+;;   (-> (.getBytes value) bytes->hex))
+
+;; (defmethod encode :integer
+;;   [_ value]
+;;   (-> value FBUtilities/toByteArray bytes->hex))
+
+;; (defmethod encode :long
+;;   [_ value]
+;;   (-> value FBUtilities/toByteArray bytes->hex))
+
+;; (defmethod encode :json
+;;   [_ value]
+;;   (-> value json/generate-string (encode :string)))
+
+;; (defmethod encode :clj
+;;   [_ value]
+;;   (-> value prn (encode :string)))
+
+;; (defmethod encode :uuid
+;;   [_ value]
+;;   (encode :string value))
+
+;; (defmethod encode :default [_ value] value)
