@@ -116,6 +116,8 @@ can have one of arbitrary depth.
             (where (pk :pk-alias 1))
             (using  :concistency :QUORUM))
 
+More details about query formats [here](https://github.com/mpenet/thera/blob/master/test/thera/test/query.clj)
+
 ### Parameterised queries
 
 Positional notation is possible using "?" values, named notation
