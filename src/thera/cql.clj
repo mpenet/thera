@@ -54,10 +54,11 @@
   [_ args]
   (let [[columns opts] (if (vector? (first args))
                          [(first args) (rest args)]
-                         [[] args])]
-  (join-spaced
-   [(translate :fields-options (apply array-map opts))
-    (translate :fields-value columns)])))
+                         [nil args])]
+    (->> [(when (seq opts) (translate :fields-options (apply array-map opts)))
+         (when (seq columns) (translate :fields-value columns))]
+         (filter identity)
+         join-spaced)))
 
 (defmethod translate :fields-value
   [_ value]
