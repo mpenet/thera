@@ -143,7 +143,7 @@
 
 (defn make-query
   [template query]
-  (println "Q:" query)
+;  ;; (println "Q:" query)
   (->> (map (fn [token]
               (if (string? token)
                 token
