@@ -3,7 +3,8 @@
 
   (:use [thera.schema])
 
-  (:import [java.sql DriverManager PreparedStatement]
+  (:import [java.nio HeapByteBuffer]
+   [java.sql DriverManager PreparedStatement]
            [org.apache.cassandra.cql.jdbc
             CassandraDataSource CassandraConnection CResultSet
             TypedColumn CResultSet$CResultSetMetaData]))
@@ -57,9 +58,13 @@
   [^CResultSet rs ^Integer index]
   (.getColumn rs index))
 
-(defn col-bytes-value
+(defn ^HeapByteBuffer col-value
   [^TypedColumn col]
-  (.. col getRawColumn getValue))
+  (.. col getRawColumn value))
+
+(defn ^HeapByteBuffer col-name
+  [^TypedColumn col]
+  (.. col getRawColumn name))
 
 (defn ^"[B" row-key
   [^CResultSet rs]
@@ -84,15 +89,15 @@
 (defn as-serv-schema-col
   [^CResultSet rs index]
   (let [^TypedColumn col (typed-col rs index)]
-    (make-col (.. col getNameType (compose (.. col getRawColumn name)))
+    (make-col (.. col getNameType (compose (col-name col)))
               (.getValue col))))
 
 (defn as-bytes-col
   [rs index]
   (let [^TypedColumn col (typed-col rs index)]
     (make-col
-     (.. col getRawColumn name)
-     (.. col getRawColumn value))))
+     (col-name col)
+     (col-value col))))
 
 (defn as-schema-col
   [rs index schema]
@@ -114,7 +119,7 @@
      (fn [index]
        (when (= pk-hex
                 (-> (typed-col rs index)
-                    col-bytes-value
+                    col-value
                     codec/bytes->hex))
          index))
      (->> (col-count rs) inc (range 1)))))

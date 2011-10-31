@@ -34,8 +34,8 @@
   (cql/make-query
    ["SELECT" :fields "FROM" :column-family :where :using :limit]
    (apply-merge
-    {:column-family column-family}
-    {:fields ["*"]}
+    {:column-family column-family
+     :fields ["*"]}
     steps)))
 
 (defn insert [column-family & steps]

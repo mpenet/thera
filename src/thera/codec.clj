@@ -5,16 +5,15 @@
     JdbcAscii JdbcUTF8 JdbcInteger JdbcInt32 JdbcLong JdbcDouble JdbcFloat
     JdbcBytes JdbcCounterColumn JdbcDecimal JdbcUUID JdbcLexicalUUID
     JdbcTimeUUID JdbcDate JdbcBoolean]
-   ;; soon to become [org.apache.cassandra.utils Hex]
-   [org.apache.cassandra.utils FBUtilities]))
+   [org.apache.cassandra.utils ByteBufferUtil]))
 
-(defn ^"[B" hex->bytes
+(defn hex->bytes
   [^String hex]
-  (FBUtilities/hexToBytes hex))
+  (ByteBufferUtil/hexToBytes hex))
 
 (defn ^String bytes->hex
-  [^"[B" bytes]
-  (FBUtilities/bytesToHex bytes))
+  [bytes]
+  (ByteBufferUtil/bytesToHex bytes))
 
 (defmulti decode (fn [type value] type))
 
