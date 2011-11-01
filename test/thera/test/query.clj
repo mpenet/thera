@@ -28,8 +28,8 @@
          (select :foo (fields (as-range :a :b))))))
 
 (deftest using-query
-  (is (= "SELECT * FROM foo USING CONCISTENCY QUORUM AND TIMESTAMP 123123 AND TTL 123"
-         (select :foo (using :concistency :QUORUM
+  (is (= "SELECT * FROM foo USING CONSISTENCY QUORUM AND TIMESTAMP 123123 AND TTL 123"
+         (select :foo (using :consistency :QUORUM
                              :timestamp 123123
                              :TTL 123)))))
 
@@ -71,20 +71,20 @@
                                 [:eq "gender" "male"]))))))
 
 (deftest insert-query
-  (is (="INSERT INTO foo (KEY, bar, alpha) VALUES (123, 'baz', 'beta') USING CONCISTENCY QUORUM AND TIMESTAMP 123123 AND TTL 123"
+  (is (="INSERT INTO foo (KEY, bar, alpha) VALUES (123, 'baz', 'beta') USING CONSISTENCY QUORUM AND TIMESTAMP 123123 AND TTL 123"
         (insert :foo
                 (pk 123)
                 (values {:bar "baz"
                          :alpha "beta"})
-                (using  :concistency :QUORUM
+                (using  :consistency :QUORUM
                         :timestamp 123123
                         :TTL 123)))))
 
 (deftest update-query
-  (is (=  "UPDATE foo USING CONCISTENCY QUORUM AND TIMESTAMP 123123 AND TTL 123 SET col1 = 'value1', col2 = 'value2' WHERE pk-alias = 1"
+  (is (=  "UPDATE foo USING CONSISTENCY QUORUM AND TIMESTAMP 123123 AND TTL 123 SET col1 = 'value1', col2 = 'value2' WHERE pk-alias = 1"
           (update :foo
                   (where (pk :pk-alias 1))
-                  (using  :concistency :QUORUM
+                  (using  :consistency :QUORUM
                           :timestamp 123123
                           :TTL 123)
                   (values
@@ -92,25 +92,25 @@
                     :col2 "value2"})))))
 
 (deftest delete-query
-  (is (= "DELETE FROM foo USING CONCISTENCY QUORUM WHERE pk-alias = 1"
+  (is (= "DELETE FROM foo USING CONSISTENCY QUORUM WHERE pk-alias = 1"
          (delete :foo
                  (columns [:a :b])
                  (where (pk :pk-alias 1))
-                 (using  :concistency :QUORUM)))))
+                 (using  :consistency :QUORUM)))))
 
 
 (deftest batch-query
-  (is (= "BATCH BEGIN\n SELECT * FROM foo;INSERT INTO foo (KEY, bar, alpha) VALUES (123, 'baz', 'beta') USING CONCISTENCY QUORUM AND TIMESTAMP 123123 AND TTL 123;DELETE FROM foo USING CONCISTENCY QUORUM WHERE pk-alias = 1 \nAPPLY BATCH"
+  (is (= "BATCH BEGIN\n SELECT * FROM foo;INSERT INTO foo (KEY, bar, alpha) VALUES (123, 'baz', 'beta') USING CONSISTENCY QUORUM AND TIMESTAMP 123123 AND TTL 123;DELETE FROM foo USING CONSISTENCY QUORUM WHERE pk-alias = 1 \nAPPLY BATCH"
          (batch
           (select :foo)
           (insert :foo
                   (pk 123)
                   (values {:bar "baz"
                            :alpha "beta"})
-                  (using  :concistency :QUORUM
+                  (using  :consistency :QUORUM
                           :timestamp 123123
                           :TTL 123))
           (delete :foo
                   (columns [:a :b])
                   (where (pk :pk-alias 1))
-                  (using  :concistency :QUORUM))))))
+                  (using  :consistency :QUORUM))))))
