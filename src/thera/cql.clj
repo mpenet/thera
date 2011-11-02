@@ -26,7 +26,6 @@
   (encode-value
     [value]
     (format "'%s'" value))
-  (encode-name [value] value)
 
   clojure.lang.Keyword
   (encode-value [value] (name value))

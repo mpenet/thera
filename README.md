@@ -66,18 +66,18 @@ can have one of arbitrary depth.
           ;; (pk :kalias1 [1 2 "a" 4])
 
           ;; key range
-          ;; (pk {:gt 1 :lte 2})
-          ;; (pk {:gt 1})
+          ;; (pk {:$gt 1 :lte 2})
+          ;; (pk {:$gt 1})
 
           ;; key range + alias
           ;; (pk :keyalias1
-          ;;     {:gt 1})
-          ;; (pk :alias {:gt 1 :lt 2})
+          ;;     {:$gt 1})
+          ;; (pk :alias {:$gt 1 :lt 2})
 
           ;; secondary indexes
-          (columns [:gt "name" 1]
-                   [:eq "pwd" "password"]
-                   [:eq "gender" "male"])))))
+          (columns [:$gt "name" 1]
+                   [:$eq "pwd" "password"]
+                   [:$eq "gender" "male"])))))
 
 
 ### INSERT
@@ -107,7 +107,8 @@ can have one of arbitrary depth.
                            :TTL 123)
                    (values
                     {:col1 :value1
-                     :col2 :value2}))
+                     :col2 :value2
+                     :col3 {:$incr 10}}))
 
 ### DELETE
 
