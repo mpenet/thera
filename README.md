@@ -217,8 +217,6 @@ Defaults to :bytes
 
 ## TODO
 
-* Counters support
-
 * DDL (CREATE, ALTER, TRUNCATE, DROP)
 
 * Higher level api for Schema based use (CRUD and later Schema syncronisation with server)
