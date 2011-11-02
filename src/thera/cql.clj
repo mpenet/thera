@@ -8,11 +8,13 @@
 (def join-coma (partial join ", "))
 
 (def operators
-  {:gt ">"
-   :lt "<"
-   :lte "<="
-   :gte ">="
-   :eq "="})
+  {:$gt ">"
+   :$lt "<"
+   :$lte "<="
+   :$gte ">="
+   :$eq "="
+   :$incr "+"
+   :$decr "-"})
 
 (defprotocol PEncoder
   (encode-value [value])
@@ -21,7 +23,8 @@
 (extend-protocol PEncoder
 
   java.lang.String
-  (encode-value [value]
+  (encode-value
+    [value]
     (format "'%s'" value))
   (encode-name [value] value)
 
@@ -37,7 +40,9 @@
 
   clojure.lang.IPersistentMap
   (encode-value [value]
-    (->> (map (fn [[k v]] (format "%s = %s" (encode-name k) (encode-value v))) value)
+    (->> (map (fn [[k v]] (format "%s = %s"
+                                  (encode-name k)
+                                  (encode-value v))) value)
          (join-coma)))
 
   java.lang.Object
@@ -132,7 +137,22 @@
                  columns)))
 
 (defmethod translate :set [_ values]
-  (str "SET " (encode-value values)))
+  (str "SET "
+       (->> (map (fn [[k v]]
+                   (if (map? v) ;; counter
+                     (translate :counter [k (first v)])
+                     (format "%s = %s"
+                             (encode-name k)
+                             (encode-value v))))
+                 values)
+            (join-coma))))
+
+(defmethod translate :counter [_ [field-name {op 0 value 1}]]
+  (format "%s = %s %s %s"
+          (encode-name field-name)
+          (encode-name field-name)
+          (op operators)
+          value))
 
 (defmethod translate  :limit
   [_ limit]

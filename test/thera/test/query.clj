@@ -50,25 +50,25 @@
          (select :foo (where (pk :keyalias [1 2 "baz" :bar])))))
 
   (is (= "SELECT * FROM foo WHERE KEY > 1"
-           (select :foo (where (pk {:gt 1})))))
+           (select :foo (where (pk {:$gt 1})))))
 
   (is (= "SELECT * FROM foo WHERE KEY > 1 AND KEY <= 2"
-         (select :foo (where (pk {:gt 1 :lte 2})))))
+         (select :foo (where (pk {:$gt 1 :$lte 2})))))
 
 
   (is (= "SELECT * FROM foo WHERE keyalias > 1"
-           (select :foo (where (pk :keyalias {:gt 1})))))
+           (select :foo (where (pk :keyalias {:$gt 1})))))
 
   (is (= "SELECT * FROM foo WHERE keyalias > 1 AND keyalias <= 2"
-         (select :foo (where (pk :keyalias {:gt 1 :lte 2}))))))
+         (select :foo (where (pk :keyalias {:$gt 1 :$lte 2}))))))
 
 (deftest indexes-query
   (is (= "SELECT * FROM foo WHERE KEY = foo AND name>1 AND pwd='password' AND gender='male'"
          (select :foo (where
                        (pk :foo)
-                       (columns [:gt "name" 1]
-                                [:eq "pwd" "password"]
-                                [:eq "gender" "male"]))))))
+                       (columns [:$gt "name" 1]
+                                [:$eq "pwd" "password"]
+                                [:$eq "gender" "male"]))))))
 
 (deftest insert-query
   (is (="INSERT INTO foo (KEY, bar, alpha) VALUES (123, 'baz', 'beta') USING CONSISTENCY QUORUM AND TIMESTAMP 123123 AND TTL 123"
@@ -89,7 +89,19 @@
                           :TTL 123)
                   (values
                    {:col1 "value1"
-                    :col2 "value2"})))))
+                    :col2 "value2"})))
+
+      ;;counter query
+      (= "UPDATE foo USING CONSISTENCY QUORUM AND TIMESTAMP 123123 AND TTL 123 SET col1 = 'value1', col2 = 'value2', col3 = col3 + 100 WHERE pk-alias = 1"
+         (update :foo
+                 (where (pk :pk-alias 1))
+                 (using  :consistency :QUORUM
+                         :timestamp 123123
+                         :TTL 123)
+                 (values
+                  {:col1 "value1"
+                   :col2 "value2"
+                   :col3 {:$incr 100}})))))
 
 (deftest delete-query
   (is (= "DELETE FROM foo USING CONSISTENCY QUORUM WHERE pk-alias = 1"
