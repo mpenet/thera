@@ -179,39 +179,6 @@ More details about query formats [here](https://github.com/mpenet/thera/blob/mas
 It uses Cassandra Jdbc driver and provides the basic building blocks to
 something more idiomatic that will come later.
 
-### Example
-
-;; Query for list of keys
-(select :foo (where (in keyalias [1 2 "baz" :bar])))))
-
-=> "SELECT * FROM foo WHERE keyalias in (1, 2, 'baz', bar)"
-```
-
-```clojure
-;; Range of keys
-(select :foo (where (and (> key 1) (key <= 2))))
-
-=> "SELECT * FROM foo WHERE key > 1 and key <= 2"
-```
-
-```clojure
-;; Key + column index
-(select :foo
-     (where
-      (and
-       (= key :foo)
-       (> :name 1)
-       (= :pwd "password")
-       (= :gender "male"))))
-
-=> "SELECT * FROM foo WHERE key = foo and name > 1 and pwd = 'password' and gender = 'male'"
-```
-
-```clojure
-;; Field selection
-(select :foo (fields [:bar "baz"]))
-
-=> "SELECT bar, 'baz' FROM foo"
 
 ```clojure
 (use 'thera.client)
