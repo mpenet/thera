@@ -20,22 +20,16 @@
 (defmacro where [& args]
   `{:where '~args})
 
-(defn pk [& value]
-  {:pk value})
+(defmacro values [values]
+  `{:values '~values})
 
-(defn columns [& values]
-  {:columns values})
-
-(defn values [values]
-  {:values values})
-
-(defn select [column-family & steps]
-  (cql/make-query
-   ["SELECT" :fields "FROM" :column-family :where :using :limit]
-   (apply-merge
-    {:column-family column-family
-     :fields [[:*]]}
-    steps)))
+(defmacro select [column-family & steps]
+  `(cql/make-query
+    ["SELECT" :fields "FROM" :column-family :where :using :limit]
+    (apply-merge
+     {:column-family ~column-family
+      :fields [[:*]]}
+     (or ~@steps))))
 
 (defmacro insert [column-family pk & steps]
   `(let [steps-map# (apply-merge ~@steps)]
@@ -45,24 +39,25 @@
        {:column-family ~column-family
         :insert-values
         {:row '~pk
-         :values (:values steps-map#)}}
-       (dissoc steps-map# :values :pk)))))
+         :values (:values steps-map#)}
+        }
+       (dissoc steps-map# :values)))))
 
-(defn update [column-family & steps]
-  (let [step-map (apply-merge steps)]
+(defmacro update [column-family & steps]
+  `(let [step-map# (apply-merge ~@steps)]
     (cql/make-query
      ["UPDATE" :column-family :using :set :where]
      (apply-merge
-      {:column-family column-family}
-      (dissoc step-map :values)
-      {:set (:values step-map)}))))
+      {:column-family ~column-family}
+      (dissoc step-map# :values)
+      {:set (:values step-map#)}))))
 
-(defn delete [column-family & steps]
-  (cql/make-query
-   ["DELETE" :fields "FROM" :column-family :using :where]
-   (apply-merge
-    {:column-family column-family}
-    steps)))
+(defmacro delete [column-family & steps]
+  `(cql/make-query
+    ["DELETE" :fields "FROM" :column-family :using :where]
+    (apply-merge
+     {:column-family ~column-family}
+     ~@steps)))
 
 (defn batch
   [& args]

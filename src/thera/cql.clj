@@ -2,13 +2,11 @@
   ^{:doc "Query maps to CQL transformations"}
   (:use [clojure.string :only [upper-case join]]))
 
-(def default-key-name "key")
 (def join-and (partial join " and "))
 (def join-spaced (partial join " "))
 (def join-coma (partial join ", "))
 
 (defprotocol PEncoder
-  (walk-forms [value])
   (encode [value]))
 
 (def operators ['- '+ '= '> '< '<= '>= 'and 'or 'in])
@@ -110,11 +108,6 @@
           (->> values keys (cons (second row)) encode)
           (->> values vals (cons (last row)) encode)))
 
-(defmethod translate :columns [_ columns]
-  (join-and (map (fn [[op k v]]
-                   (str (encode k) (op 'operators) (encode v)))
-                 columns)))
-
 (defmethod translate :set [_ values]
   (str "SET "
        (->> (map (fn [[k v]]
@@ -130,7 +123,7 @@
   (format "%s = %s %s %s"
           (encode field-name)
           (encode field-name)
-          (op 'operators)
+          op
           value))
 
 (defmethod translate  :limit

@@ -99,28 +99,28 @@
                     :col2 "value2"})))
 
       ;;counter query
-      ;; (= "UPDATE foo USING CONSISTENCY QUORUM and TIMESTAMP 123123 and TTL 123 SET col1 = 'value1', col2 = 'value2', col3 = col3 + 100 WHERE pk-alias = 1"
-      ;;    (update :foo
-      ;;            (where (= pk-alias 1))
-      ;;            (using  :consistency :QUORUM
-      ;;                    :timestamp 123123
-      ;;                    :TTL 123)
-      ;;            (values
-      ;;             {:col1 "value1"
-      ;;              :col2 "value2"
-      ;;              :col3 (+= 100)})))
+      (= "UPDATE foo USING CONSISTENCY QUORUM and TIMESTAMP 123123 and TTL 123 SET col1 = 'value1', col2 = 'value2', col3 = col3 + 100 WHERE pk-alias = 1"
+         (update :foo
+                 (where (= pk-alias 1))
+                 (using  :consistency :QUORUM
+                         :timestamp 123123
+                         :TTL 123)
+                 (values
+                  {:col1 "value1"
+                   :col2 "value2"
+                   :col3 (+= 100)})))
       ))
 
 (deftest delete-query
-  (is (= "DELETE FROM foo USING CONSISTENCY QUORUM WHERE pk-alias = 1"
+  (is (= "DELETE a, b FROM foo USING CONSISTENCY QUORUM WHERE pk-alias = 1"
          (delete :foo
-                 (columns [:a :b])
+                 (fields [:a :b])
                  (where (= pk-alias 1))
                  (using  :consistency :QUORUM)))))
 
 
 (deftest batch-query
-  (is (= "BATCH BEGIN\n SELECT * FROM foo;INSERT INTO foo (key, bar, alpha) VALUES (123, 'baz', 'beta') USING CONSISTENCY QUORUM and TIMESTAMP 123123 and TTL 123;DELETE FROM foo USING CONSISTENCY QUORUM WHERE pk-alias = 1 \nAPPLY BATCH"
+  (is (= "BATCH BEGIN\n SELECT * FROM foo;INSERT INTO foo (key, bar, alpha) VALUES (123, 'baz', 'beta') USING CONSISTENCY QUORUM and TIMESTAMP 123123 and TTL 123;DELETE a, b FROM foo USING CONSISTENCY QUORUM WHERE pk-alias = 1 \nAPPLY BATCH"
          (batch
           (select :foo)
           (insert :foo
@@ -131,6 +131,6 @@
                           :timestamp 123123
                           :TTL 123))
           (delete :foo
-                  (columns [:a :b])
+                  (fields [:a :b])
                   (where (= pk-alias 1))
                   (using  :consistency :QUORUM))))))

@@ -28,13 +28,19 @@ can have one of arbitrary depth.
     ;; simple key lookup
     (select :foo (where (= key "bar")))
 
+    >> "SELECT * FROM foo WHERE key = 'bar'"
+
 
     ;; query for list of keys
     (select :foo (where (in keyalias [1 2 "baz" :bar])))))
 
+    >> "SELECT * FROM foo WHERE key in (1, 2, 'baz', bar)"
+
 
     ;; range of keys
     (select :foo (where (and (> key 1) (key <= 2))))
+
+    >> "SELECT * FROM foo WHERE key > 1 and key <= 2"
 
 
     ;; key + column index
@@ -46,24 +52,34 @@ can have one of arbitrary depth.
            (= :pwd "password")
            (= :gender "male"))))
 
+    >> "SELECT * FROM foo WHERE key = foo and name > 1 and pwd = 'password' and gender = 'male'"
+
 
     ;; field selection
     (select :foo (fields [:bar "baz"]))
+
+    >> "SELECT bar, 'baz' FROM foo"
 
 
     ;; field N range
     (select :foo (fields :reversed true
                          :first 100))
 
+    >> "SELECT REVERSED FIRST 100 FROM foo"
+
 
     ;; column range
     (select :foo (fields (as-range :a :b)))
+
+    >> "SELECT a...b FROM foo"
 
 
     ;; passing additional options (valid for any query type)
     (select :foo (using :consistency :QUORUM
                         :timestamp 123123
                         :TTL 123))
+
+    >> "SELECT * FROM foo USING CONSISTENCY QUORUM and TIMESTAMP 123123 and TTL 123"
 
 and more...
 
@@ -77,6 +93,8 @@ and more...
                      :timestamp 123123
                      :TTL 123))
 
+    >> "INSERT INTO foo (key, bar, alpha) VALUES (123, 'baz', 'beta') USING CONSISTENCY QUORUM and TIMESTAMP 123123 and TTL 123"
+
 
 ### UPDATE
 
@@ -89,12 +107,16 @@ and more...
              {:col1 "value1"
               :col2 "value2"}))
 
+    >> "UPDATE foo USING CONSISTENCY QUORUM and TIMESTAMP 123123 and TTL 123 SET col1 = 'value1', col2 = 'value2' WHERE key-alias = 1"
+
 ### DELETE
 
     (delete :foo
-            (columns [:a :b])
+            (fields [:a :b])
             (where (= pk-alias 1))
             (using  :consistency :QUORUM))
+
+    >> "DELETE a, b FROM foo USING CONSISTENCY QUORUM WHERE pk-alias = 1"
 
 ### BATCH
 
@@ -108,9 +130,14 @@ and more...
                         :timestamp 123123
                         :TTL 123))
         (delete :foo
-                (columns [:a :b])
+                (fields [:a :b])
                 (where (= pk-alias 1))
                 (using  :consistency :QUORUM)))
+
+    >> "BATCH BEGIN
+            SELECT * FROM foo;INSERT INTO foo (key, bar, alpha) VALUES (123, 'baz', 'beta') USING CONSISTENCY QUORUM and TIMESTAMP 123123 and TTL 123;
+            DELETE a, b FROM foo USING CONSISTENCY QUORUM WHERE pk-alias = 1
+        APPLY BATCH"
 
 More details about query formats [here](https://github.com/mpenet/thera/blob/master/test/thera/test/query.clj)
 
@@ -208,7 +235,9 @@ Defaults to :bytes
 
 ## TODO
 
-* Parameterised query
+* Parameterised query ("?" by default as-cql fn etc)
+
+* restored counter query
 
 * DDL (CREATE, ALTER, TRUNCATE, DROP)
 
