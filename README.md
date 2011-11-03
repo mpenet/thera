@@ -31,16 +31,19 @@ can have one of arbitrary depth.
     >> "SELECT * FROM foo WHERE key = 'bar'"
 
 
+
     ;; Query for list of keys
     (select :foo (where (in keyalias [1 2 "baz" :bar])))))
 
     >> "SELECT * FROM foo WHERE keyalias in (1, 2, 'baz', bar)"
 
 
+
     ;; Range of keys
     (select :foo (where (and (> key 1) (key <= 2))))
 
     >> "SELECT * FROM foo WHERE key > 1 and key <= 2"
+
 
 
     ;; Key + column index
@@ -55,10 +58,12 @@ can have one of arbitrary depth.
     >> "SELECT * FROM foo WHERE key = foo and name > 1 and pwd = 'password' and gender = 'male'"
 
 
+
     ;; Field selection
     (select :foo (fields [:bar "baz"]))
 
     >> "SELECT bar, 'baz' FROM foo"
+
 
 
     ;; Field N range
@@ -68,10 +73,12 @@ can have one of arbitrary depth.
     >> "SELECT REVERSED FIRST 100 FROM foo"
 
 
+
     ;; Column range
     (select :foo (fields (as-range :a :b)))
 
     >> "SELECT a...b FROM foo"
+
 
 
     ;; Passing additional options (valid for any query type)
@@ -81,10 +88,12 @@ can have one of arbitrary depth.
 
     >> "SELECT * FROM foo USING CONSISTENCY QUORUM and TIMESTAMP 123123 and TTL 123"
 
+
     ;; Functions
     (select :foo (fields [:count-fn]))
 
     >> "SELECT count() FROM foo"
+
 
 and more...
 
@@ -113,6 +122,7 @@ and more...
               :col2 "value2"}))
 
     >> "UPDATE foo USING CONSISTENCY QUORUM and TIMESTAMP 123123 and TTL 123 SET col1 = 'value1', col2 = 'value2' WHERE keyalias = 1"
+
 
 
     ;; Update/increase with counter + regular columns
