@@ -25,25 +25,25 @@ can have one of arbitrary depth.
 
 ### SELECT
 
-    ;; simple key lookup
+    ;; Simple key lookup
     (select :foo (where (= key "bar")))
 
     >> "SELECT * FROM foo WHERE key = 'bar'"
 
 
-    ;; query for list of keys
+    ;; Query for list of keys
     (select :foo (where (in keyalias [1 2 "baz" :bar])))))
 
     >> "SELECT * FROM foo WHERE keyalias in (1, 2, 'baz', bar)"
 
 
-    ;; range of keys
+    ;; Range of keys
     (select :foo (where (and (> key 1) (key <= 2))))
 
     >> "SELECT * FROM foo WHERE key > 1 and key <= 2"
 
 
-    ;; key + column index
+    ;; Key + column index
     (select :foo
          (where
           (and
@@ -55,31 +55,36 @@ can have one of arbitrary depth.
     >> "SELECT * FROM foo WHERE key = foo and name > 1 and pwd = 'password' and gender = 'male'"
 
 
-    ;; field selection
+    ;; Field selection
     (select :foo (fields [:bar "baz"]))
 
     >> "SELECT bar, 'baz' FROM foo"
 
 
-    ;; field N range
+    ;; Field N range
     (select :foo (fields :reversed true
                          :first 100))
 
     >> "SELECT REVERSED FIRST 100 FROM foo"
 
 
-    ;; column range
+    ;; Column range
     (select :foo (fields (as-range :a :b)))
 
     >> "SELECT a...b FROM foo"
 
 
-    ;; passing additional options (valid for any query type)
+    ;; Passing additional options (valid for any query type)
     (select :foo (using :consistency :QUORUM
                         :timestamp 123123
                         :TTL 123))
 
     >> "SELECT * FROM foo USING CONSISTENCY QUORUM and TIMESTAMP 123123 and TTL 123"
+
+    ;; Functions
+    (select :foo (fields [:count-fn]))
+
+    >> "SELECT count() FROM foo"
 
 and more...
 
@@ -110,7 +115,7 @@ and more...
     >> "UPDATE foo USING CONSISTENCY QUORUM and TIMESTAMP 123123 and TTL 123 SET col1 = 'value1', col2 = 'value2' WHERE keyalias = 1"
 
 
-    ;; update/increase with counter + regular columns
+    ;; Update/increase with counter + regular columns
     (update :foo
             (where (= pkalias 1))
             (values
