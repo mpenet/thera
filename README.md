@@ -25,145 +25,151 @@ can have one of arbitrary depth.
 
 ### SELECT
 
-    ;; Simple key lookup
-    (select :foo (where (= key "bar")))
+```clojure
+;; Simple key lookup
+(select :foo (where (= key "bar")))
 
-    >> "SELECT * FROM foo WHERE key = 'bar'"
+=> "SELECT * FROM foo WHERE key = 'bar'"
+```
+
+```clojure
+;; Query for list of keys
+(select :foo (where (in keyalias [1 2 "baz" :bar])))))
+
+=> "SELECT * FROM foo WHERE keyalias in (1, 2, 'baz', bar)"
+```
+
+```clojure
+;; Range of keys
+(select :foo (where (and (> key 1) (key <= 2))))
+
+=> "SELECT * FROM foo WHERE key > 1 and key <= 2"
+```
+
+```clojure
+;; Key + column index
+(select :foo
+     (where
+      (and
+       (= key :foo)
+       (> :name 1)
+       (= :pwd "password")
+       (= :gender "male"))))
+
+=> "SELECT * FROM foo WHERE key = foo and name > 1 and pwd = 'password' and gender = 'male'"
+```
+
+```clojure
+;; Field selection
+(select :foo (fields [:bar "baz"]))
+
+=> "SELECT bar, 'baz' FROM foo"
+```
+
+```clojure
+;; Field N range
+(select :foo (fields :reversed true
+                     :first 100))
+
+=> "SELECT REVERSED FIRST 100 FROM foo"
+```
+
+```clojure
+;; Column range
+(select :foo (fields (as-range :a :b)))
+
+=> "SELECT a...b FROM foo"
+```
+
+```clojure
+;; Passing additional options (valid for any query type)
+(select :foo (using :consistency :QUORUM
+                    :timestamp 123123
+                    :TTL 123))
+=> "SELECT * FROM foo USING CONSISTENCY QUORUM and TIMESTAMP 123123 and TTL 123"
+```
 
 
+```clojure
+;; Functions
+(select :foo (fields [:count-fn]))
 
-    ;; Query for list of keys
-    (select :foo (where (in keyalias [1 2 "baz" :bar])))))
-
-    >> "SELECT * FROM foo WHERE keyalias in (1, 2, 'baz', bar)"
-
-
-
-    ;; Range of keys
-    (select :foo (where (and (> key 1) (key <= 2))))
-
-    >> "SELECT * FROM foo WHERE key > 1 and key <= 2"
-
-
-
-    ;; Key + column index
-    (select :foo
-         (where
-          (and
-           (= key :foo)
-           (> :name 1)
-           (= :pwd "password")
-           (= :gender "male"))))
-
-    >> "SELECT * FROM foo WHERE key = foo and name > 1 and pwd = 'password' and gender = 'male'"
-
-
-
-    ;; Field selection
-    (select :foo (fields [:bar "baz"]))
-
-    >> "SELECT bar, 'baz' FROM foo"
-
-
-
-    ;; Field N range
-    (select :foo (fields :reversed true
-                         :first 100))
-
-    >> "SELECT REVERSED FIRST 100 FROM foo"
-
-
-
-    ;; Column range
-    (select :foo (fields (as-range :a :b)))
-
-    >> "SELECT a...b FROM foo"
-
-
-
-    ;; Passing additional options (valid for any query type)
-    (select :foo (using :consistency :QUORUM
-                        :timestamp 123123
-                        :TTL 123))
-
-    >> "SELECT * FROM foo USING CONSISTENCY QUORUM and TIMESTAMP 123123 and TTL 123"
-
-
-    ;; Functions
-    (select :foo (fields [:count-fn]))
-
-    >> "SELECT count() FROM foo"
-
+=> "SELECT count() FROM foo"
+```
 
 and more...
 
+
 ### INSERT
 
-    (insert :foo
-             (= key 123)
-             (values {:bar "baz"
-                      :alpha "beta"})
-             (using  :consistency :QUORUM
-                     :timestamp 123123
-                     :TTL 123))
-
-    >> "INSERT INTO foo (key, bar, alpha) VALUES (123, 'baz', 'beta') USING CONSISTENCY QUORUM and TIMESTAMP 123123 and TTL 123"
-
+```clojure
+(insert :foo
+         (= key 123)
+         (values {:bar "baz"
+                  :alpha "beta"})
+         (using  :consistency :QUORUM
+                 :timestamp 123123
+                 :TTL 123))
+=> "INSERT INTO foo (key, bar, alpha) VALUES (123, 'baz', 'beta') USING CONSISTENCY QUORUM and TIMESTAMP 123123 and TTL 123"
+```
 
 ### UPDATE
+```clojure
+(update :foo
+        (where (= keyalias 1))
+        (using  :consistency :QUORUM
+                :timestamp 123123
+                :TTL 123)
+        (values
+         {:col1 "value1"
+          :col2 "value2"}))
 
-    (update :foo
-            (where (= keyalias 1))
-            (using  :consistency :QUORUM
-                    :timestamp 123123
-                    :TTL 123)
-            (values
-             {:col1 "value1"
-              :col2 "value2"}))
+=> "UPDATE foo USING CONSISTENCY QUORUM and TIMESTAMP 123123 and TTL 123 SET col1 = 'value1', col2 = 'value2' WHERE keyalias = 1"
+```
 
-    >> "UPDATE foo USING CONSISTENCY QUORUM and TIMESTAMP 123123 and TTL 123 SET col1 = 'value1', col2 = 'value2' WHERE keyalias = 1"
+```clojure
+;; Update/increase with counter + regular columns
+(update :foo
+        (where (= pkalias 1))
+        (values
+          {:col1 "value1"
+           :col2 "value2"
+           :col3 (+ 100)}))
 
-
-
-    ;; Update/increase with counter + regular columns
-    (update :foo
-            (where (= pkalias 1))
-            (values
-              {:col1 "value1"
-               :col2 "value2"
-               :col3 (+ 100)}))
-
-    >> "UPDATE foo SET col1 = 'value1', col2 = 'value2', col3 = col3 + 100 WHERE pkalias = 1"
+=> "UPDATE foo SET col1 = 'value1', col2 = 'value2', col3 = col3 + 100 WHERE pkalias = 1"
+```
 
 ### DELETE
 
+```clojure
+(delete :foo
+        (fields [:a :b])
+        (where (= pkalias 1))
+        (using  :consistency :QUORUM))
+
+=> "DELETE a, b FROM foo USING CONSISTENCY QUORUM WHERE pkalias = 1"
+
+### BATCH
+```clojure
+(batch
+    (select :foo)
+    (insert :foo
+            (= key 123)
+            (values {:bar "baz"
+                     :alpha "beta"})
+            (using  :consistency :QUORUM
+                    :timestamp 123123
+                    :TTL 123))
     (delete :foo
             (fields [:a :b])
             (where (= pkalias 1))
-            (using  :consistency :QUORUM))
+            (using  :consistency :QUORUM)))
 
-    >> "DELETE a, b FROM foo USING CONSISTENCY QUORUM WHERE pkalias = 1"
-
-### BATCH
-
-    (batch
-        (select :foo)
-        (insert :foo
-                (= key 123)
-                (values {:bar "baz"
-                         :alpha "beta"})
-                (using  :consistency :QUORUM
-                        :timestamp 123123
-                        :TTL 123))
-        (delete :foo
-                (fields [:a :b])
-                (where (= pkalias 1))
-                (using  :consistency :QUORUM)))
-
-    >> "BATCH BEGIN
-            SELECT * FROM foo;INSERT INTO foo (key, bar, alpha) VALUES (123, 'baz', 'beta') USING CONSISTENCY QUORUM and TIMESTAMP 123123 and TTL 123;
-            DELETE a, b FROM foo USING CONSISTENCY QUORUM WHERE pkalias = 1
-        APPLY BATCH"
+=> "BATCH BEGIN
+        SELECT * FROM foo;INSERT INTO foo (key, bar, alpha) VALUES (123, 'baz', 'beta') USING CONSISTENCY QUORUM and TIMESTAMP 123123 and TTL 123;
+        DELETE a, b FROM foo USING CONSISTENCY QUORUM WHERE pkalias = 1
+    APPLY BATCH"
+```
 
 More details about query formats [here](https://github.com/mpenet/thera/blob/master/test/thera/test/query.clj)
 
@@ -175,15 +181,48 @@ something more idiomatic that will come later.
 
 ### Example
 
-    (use 'thera.client)
+;; Query for list of keys
+(select :foo (where (in keyalias [1 2 "baz" :bar])))))
 
-    (-> (make-datasource {:keyspace "foo"})
-        get-connection
-        (prepare-statement "SELECT * FROM bar")
-        execute
-        (decode-result :server-schema))
+=> "SELECT * FROM foo WHERE keyalias in (1, 2, 'baz', bar)"
+```
 
-    {:rows
+```clojure
+;; Range of keys
+(select :foo (where (and (> key 1) (key <= 2))))
+
+=> "SELECT * FROM foo WHERE key > 1 and key <= 2"
+```
+
+```clojure
+;; Key + column index
+(select :foo
+     (where
+      (and
+       (= key :foo)
+       (> :name 1)
+       (= :pwd "password")
+       (= :gender "male"))))
+
+=> "SELECT * FROM foo WHERE key = foo and name > 1 and pwd = 'password' and gender = 'male'"
+```
+
+```clojure
+;; Field selection
+(select :foo (fields [:bar "baz"]))
+
+=> "SELECT bar, 'baz' FROM foo"
+
+```clojure
+(use 'thera.client)
+
+(-> (make-datasource {:keyspace "foo"})
+    get-connection
+    (prepare-statement "SELECT * FROM bar")
+    execute
+    (decode-result :server-schema))
+
+=>  {:rows
      [{:id #<UUID 1438fc5c-4ff6-11e0-b97f-0026c650d722>,
        :cols
        ({:name "age", :value 35}
@@ -192,6 +231,7 @@ something more idiomatic that will come later.
         {:name "username", :value "mpenet"})}],
      :meta
      #<CResultSetMetaData org.apache.cassandra.cql.jdbc.CResultSet$CResultSetMetaData@1bb5d53a>}
+```
 
 There are 3 decoder availables at the moment:
 
@@ -204,18 +244,18 @@ There are 3 decoder availables at the moment:
 ### Extending the decoders
 
 You can add your own decoder as follows:
-
-    (defmethod decode-result :mydecoder
-      [^CResultSet rs _ & args]
-      (assoc
-        (make-result
-           (map-rows rs
-                     #(make-row
-                       (my-row-key-fn %)
-                       (map-columns % as-something-col-fn)))
-           (rs-meta rs))
-           :another-field ['foo]))
-
+```clojure
+(defmethod decode-result :mydecoder
+  [^CResultSet rs _ & args]
+  (assoc
+    (make-result
+       (map-rows rs
+                 #(make-row
+                   (my-row-key-fn %)
+                   (map-columns % as-something-col-fn)))
+       (rs-meta rs))
+       :another-field ['foo]))
+```
 
 ### Schema
 
@@ -226,17 +266,19 @@ suited).
 In the near future there will be only 1 schema type and syncronisation
 with server schema from the client definitions, including other options.
 
-    (defschema User
+```clojure
+(defschema User
 
-      ;; type for row-key name and value
-      :row-key {:types [:utf-8 :integer]
-                ;; key alias if any
-                :alias :foo}
+  ;; type for row-key name and value
+  :row-key {:types [:utf-8 :integer]
+            ;; key alias if any
+            :alias :foo}
 
-      ;; default types for all columns
-      :columns {:types [:utf-8 :string]
-                ;; column with value type different from default
-                :exceptions {"date" :integer}})
+  ;; default types for all columns
+  :columns {:types [:utf-8 :string]
+            ;; column with value type different from default
+            :exceptions {"date" :integer}})
+```
 
 This will return a schema instance that you can pass to decode.
 
@@ -248,10 +290,12 @@ Defaults to :bytes
 
 ### Extending the schema types
 
-    (use 'thera.codec)
+```clojure
+(use 'thera.codec)
 
-    (defmethod decode :csv [_ value]
-      (you-csv-decoder-fn (String. value "UTF-8")))
+(defmethod decode :csv [_ value]
+  (you-csv-decoder-fn (String. value "UTF-8")))
+```
 
 ## INSTALLATION
 
