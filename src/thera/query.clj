@@ -39,8 +39,7 @@
        {:column-family ~column-family
         :insert-values
         {:row '~pk
-         :values (:values steps-map#)}
-        }
+         :values (:values steps-map#)}}
        (dissoc steps-map# :values)))))
 
 (defmacro update [column-family & steps]

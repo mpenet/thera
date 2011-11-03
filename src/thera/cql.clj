@@ -111,15 +111,15 @@
 (defmethod translate :set [_ values]
   (str "SET "
        (->> (map (fn [[k v]]
-                   (if (map? v) ;; counter
-                     (translate :counter [k (first v)])
+                   (if (seq? v) ;; counter
+                     (translate :counter [k v])
                      (format "%s = %s"
                              (encode k)
                              (encode v))))
                  values)
             (join-coma))))
 
-(defmethod translate :counter [_ [field-name {op 0 value 1}]]
+(defmethod translate :counter [_ [field-name [op value]]]
   (format "%s = %s %s %s"
           (encode field-name)
           (encode field-name)

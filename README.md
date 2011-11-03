@@ -109,6 +109,17 @@ and more...
 
     >> "UPDATE foo USING CONSISTENCY QUORUM and TIMESTAMP 123123 and TTL 123 SET col1 = 'value1', col2 = 'value2' WHERE key-alias = 1"
 
+
+    ;; update/increase with counter + regular columns
+    (update :foo
+            (where (= pk-alias 1))
+            (values
+              {:col1 "value1"
+               :col2 "value2"
+               :col3 (+ 100)}))
+
+    >> "UPDATE foo SET col1 = 'value1', col2 = 'value2', col3 = col3 + 100 WHERE pk-alias = 1"
+
 ### DELETE
 
     (delete :foo
@@ -235,9 +246,7 @@ Defaults to :bytes
 
 ## TODO
 
-* Parameterised query ("?" by default as-cql fn etc)
-
-* restored counter query
+* Parameterised query ("?" by default, as-cql fn etc)
 
 * DDL (CREATE, ALTER, TRUNCATE, DROP)
 
