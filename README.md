@@ -34,7 +34,7 @@ can have one of arbitrary depth.
     ;; query for list of keys
     (select :foo (where (in keyalias [1 2 "baz" :bar])))))
 
-    >> "SELECT * FROM foo WHERE key in (1, 2, 'baz', bar)"
+    >> "SELECT * FROM foo WHERE keyalias in (1, 2, 'baz', bar)"
 
 
     ;; range of keys
@@ -99,7 +99,7 @@ and more...
 ### UPDATE
 
     (update :foo
-            (where (= key-alias 1))
+            (where (= keyalias 1))
             (using  :consistency :QUORUM
                     :timestamp 123123
                     :TTL 123)
@@ -107,27 +107,27 @@ and more...
              {:col1 "value1"
               :col2 "value2"}))
 
-    >> "UPDATE foo USING CONSISTENCY QUORUM and TIMESTAMP 123123 and TTL 123 SET col1 = 'value1', col2 = 'value2' WHERE key-alias = 1"
+    >> "UPDATE foo USING CONSISTENCY QUORUM and TIMESTAMP 123123 and TTL 123 SET col1 = 'value1', col2 = 'value2' WHERE keyalias = 1"
 
 
     ;; update/increase with counter + regular columns
     (update :foo
-            (where (= pk-alias 1))
+            (where (= pkalias 1))
             (values
               {:col1 "value1"
                :col2 "value2"
                :col3 (+ 100)}))
 
-    >> "UPDATE foo SET col1 = 'value1', col2 = 'value2', col3 = col3 + 100 WHERE pk-alias = 1"
+    >> "UPDATE foo SET col1 = 'value1', col2 = 'value2', col3 = col3 + 100 WHERE pkalias = 1"
 
 ### DELETE
 
     (delete :foo
             (fields [:a :b])
-            (where (= pk-alias 1))
+            (where (= pkalias 1))
             (using  :consistency :QUORUM))
 
-    >> "DELETE a, b FROM foo USING CONSISTENCY QUORUM WHERE pk-alias = 1"
+    >> "DELETE a, b FROM foo USING CONSISTENCY QUORUM WHERE pkalias = 1"
 
 ### BATCH
 
@@ -142,12 +142,12 @@ and more...
                         :TTL 123))
         (delete :foo
                 (fields [:a :b])
-                (where (= pk-alias 1))
+                (where (= pkalias 1))
                 (using  :consistency :QUORUM)))
 
     >> "BATCH BEGIN
             SELECT * FROM foo;INSERT INTO foo (key, bar, alpha) VALUES (123, 'baz', 'beta') USING CONSISTENCY QUORUM and TIMESTAMP 123123 and TTL 123;
-            DELETE a, b FROM foo USING CONSISTENCY QUORUM WHERE pk-alias = 1
+            DELETE a, b FROM foo USING CONSISTENCY QUORUM WHERE pkalias = 1
         APPLY BATCH"
 
 More details about query formats [here](https://github.com/mpenet/thera/blob/master/test/thera/test/query.clj)
