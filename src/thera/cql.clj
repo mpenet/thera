@@ -2,57 +2,65 @@
   ^{:doc "Query maps to CQL transformations"}
   (:use [clojure.string :only [upper-case join]]))
 
-(def default-key-name "KEY")
-(def join-and (partial join " AND "))
+(def default-key-name "key")
+(def join-and (partial join " and "))
 (def join-spaced (partial join " "))
 (def join-coma (partial join ", "))
 
-(def operators
-  {:$gt ">"
-   :$lt "<"
-   :$lte "<="
-   :$gte ">="
-   :$eq "="
-   :$incr "+"
-   :$decr "-"})
-
 (defprotocol PEncoder
-  (encode-value [value])
-  (encode-name [value]))
+  (walk-forms [value])
+  (encode [value]))
+
+(def operators ['- '+ '= '> '< '<= '>= 'and 'or 'in])
+(def fns {:count-fn "count()"})
+
+(defn prefix->infix
+  [[op & rest]]
+  (interpose op rest))
+
+(defn shuffle-op
+  [form]
+  (if (some #{(first form)} operators)
+    (prefix->infix form)
+    form))
+
+(defn walk-form
+  [form]
+  (for [el (shuffle-op form)]
+    (if (seq? el)
+      (walk-form el)
+      (encode el))))
 
 (extend-protocol PEncoder
 
   java.lang.String
-  (encode-value
+  (encode
     [value]
     (format "'%s'" value))
 
   clojure.lang.Keyword
-  (encode-value [value] (name value))
-  (encode-name [value] (name value))
+  (encode [value]
+    (get fns value (name value)))
 
   clojure.lang.Sequential
-  (encode-value [value]
-    (format "(%s)" (join-coma (map encode-value value))))
-  (encode-name [value]
-    (format "(%s)" (join-coma (map encode-name value))))
+  (encode [value]
+    (format "(%s)" (join-coma (map encode value))))
 
   clojure.lang.IPersistentMap
-  (encode-value [value]
+  (encode [value]
     (->> (map (fn [[k v]] (format "%s = %s"
-                                  (encode-name k)
-                                  (encode-value v))) value)
+                                  (encode k)
+                                  (encode v))) value)
          (join-coma)))
 
   java.lang.Object
-  (encode-value [value] value)
-  (encode-name [value] value))
+  (encode [value] value))
 
 (defmulti translate (fn [token value] token))
 
 (defmethod translate :column-family
   [_ column-family]
-  (encode-name column-family))
+  (encode column-family))
 
 (defmethod translate :fields
   [_ args]
@@ -70,9 +78,9 @@
   (if (map? value)
     (let [range (:range value)]
       (format "%s...%s"
-              (-> range first encode-name)
-              (-> range second encode-name)))
-    (join-coma (map encode-name value))))
+              (-> range first encode)
+              (-> range second encode)))
+    (join-coma (map encode value))))
 
 (defmethod translate :fields-options
   [_ opts]
@@ -91,48 +99,20 @@
        (join-and
         (for [[n value] (partition 2 args)]
           (str (-> n name upper-case)
-               " " (encode-value value))))))
-
-(defmethod translate :pk
-  [_ value]
-  (let [pk-name (if (and (= 2 (count value))
-                         (not (map? (first value))))
-                  (-> value first encode-name)
-                  default-key-name)
-        pk-value (last value)]
-    (cond
-     (vector? pk-value)
-     (format "%s IN %s" pk-name (encode-value pk-value))
-
-     (map? pk-value)
-     (join-and
-      (map (fn [[op v]]
-             (join-spaced [pk-name (op operators) v]))
-           pk-value))
-     :else
-     (str pk-name " = " (encode-value pk-value)))))
+               " " (encode value))))))
 
 (defmethod translate :where
   [_ where]
-  (str "WHERE "
-       (join-and
-        (map (fn [[k v]]
-               (translate k v))
-             ;; ensure pk is first
-             (reverse (sort-by key where))))))
+  (join-spaced (apply conj ["WHERE"] (flatten (walk-form where)))))
 
 (defmethod translate :insert-values [_ {:keys [row values]}]
-  (let [[key-name key-value] [(if (= 2 (count row))
-                                (first row)
-                                default-key-name)
-                              (last row)]]
-    (format "%s VALUES %s"
-            (->> values keys (cons key-name) encode-name)
-            (->> values vals (cons key-value) encode-value))))
+  (format "%s VALUES %s"
+          (->> values keys (cons (second row)) encode)
+          (->> values vals (cons (last row)) encode)))
 
 (defmethod translate :columns [_ columns]
   (join-and (map (fn [[op k v]]
-                   (str (encode-name k) (op operators) (encode-value v)))
+                   (str (encode k) (op 'operators) (encode v)))
                  columns)))
 
 (defmethod translate :set [_ values]
@@ -141,16 +121,16 @@
                    (if (map? v) ;; counter
                      (translate :counter [k (first v)])
                      (format "%s = %s"
-                             (encode-name k)
-                             (encode-value v))))
+                             (encode k)
+                             (encode v))))
                  values)
             (join-coma))))
 
 (defmethod translate :counter [_ [field-name {op 0 value 1}]]
   (format "%s = %s %s %s"
-          (encode-name field-name)
-          (encode-name field-name)
-          (op operators)
+          (encode field-name)
+          (encode field-name)
+          (op 'operators)
           value))
 
 (defmethod translate  :limit
@@ -162,7 +142,7 @@
 
 (defn make-query
   [template query]
-;  ;; (println "Q:" query)
+;;  (println "Q:" query)
   (->> (map (fn [token]
               (if (string? token)
                 token

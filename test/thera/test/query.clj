@@ -6,7 +6,7 @@
   (is (= "SELECT * FROM foo"
          (select :foo)))
 
-  (is (= "SELECT bar, baz FROM foo"
+  (is (= "SELECT bar, 'baz' FROM foo"
          (select :foo
               (fields [:bar "baz"]))))
 
@@ -15,65 +15,72 @@
                  (fields :reversed true
                          :first 100))))
 
-  (is (= "SELECT REVERSED FIRST 100 bar, baz FROM foo"
+  (is (= "SELECT REVERSED FIRST 100 bar, 'baz' FROM foo"
          (select :foo
                  (fields [:bar "baz"]
                          :reversed true
                          :first 100))))
 
   (is (= "SELECT count() FROM foo"
-         (select :foo (fields ["count()"]))))
+         (select :foo (fields [:count-fn]))))
 
   (is (= "SELECT a...b FROM foo"
          (select :foo (fields (as-range :a :b))))))
 
 (deftest using-query
-  (is (= "SELECT * FROM foo USING CONSISTENCY QUORUM AND TIMESTAMP 123123 AND TTL 123"
+  (is (= "SELECT * FROM foo USING CONSISTENCY QUORUM and TIMESTAMP 123123 and TTL 123"
          (select :foo (using :consistency :QUORUM
                              :timestamp 123123
                              :TTL 123)))))
 
 (deftest pks
-  (is (= "SELECT * FROM foo WHERE KEY = 1"
-         (select :foo (where (pk 1)))))
+  (is (= "SELECT * FROM foo WHERE key = 1"
+         (select :foo (where (= key 1)))))
 
-  (is (= "SELECT * FROM foo WHERE KEY = 'bar'"
-         (select :foo (where (pk "bar")))))
+  (is (= "SELECT * FROM foo WHERE key = 'bar'"
+         (select :foo (where (= key "bar")))))
 
-  (is (= "SELECT * FROM foo WHERE KEY IN (1, 2, 'baz', bar)"
-         (select :foo (where (pk  [1 2 "baz" :bar])))))
+  (is (= "SELECT * FROM foo WHERE key in (1, 2, 'baz', bar)"
+         (select :foo (where (in key [1 2 "baz" :bar])))))
 
   (is (= "SELECT * FROM foo WHERE keyalias = 'bar'"
-         (select :foo (where (pk :keyalias "bar")))))
+         (select :foo (where (= keyalias "bar")))))
 
-  (is (= "SELECT * FROM foo WHERE keyalias IN (1, 2, 'baz', bar)"
-         (select :foo (where (pk :keyalias [1 2 "baz" :bar])))))
+  (is (= "SELECT * FROM foo WHERE keyalias in (1, 2, 'baz', bar)"
+         (select :foo (where
+                       (in keyalias [1 2 "baz" :bar])))))
 
-  (is (= "SELECT * FROM foo WHERE KEY > 1"
-           (select :foo (where (pk {:$gt 1})))))
+  (is (= "SELECT * FROM foo WHERE key > 1"
+           (select :foo (where (> key 1)))))
 
-  (is (= "SELECT * FROM foo WHERE KEY > 1 AND KEY <= 2"
-         (select :foo (where (pk {:$gt 1 :$lte 2})))))
+  (is (= "SELECT * FROM foo WHERE key > 1 and key <= 2"
+         (select :foo (where (and (> key 1)
+                                  (key <= 2))))))
 
 
   (is (= "SELECT * FROM foo WHERE keyalias > 1"
-           (select :foo (where (pk :keyalias {:$gt 1})))))
+         (select :foo (where
+                       (> keyalias 1)))))
 
-  (is (= "SELECT * FROM foo WHERE keyalias > 1 AND keyalias <= 2"
-         (select :foo (where (pk :keyalias {:$gt 1 :$lte 2}))))))
+  (is (= "SELECT * FROM foo WHERE keyalias > 1 and keyalias <= 2"
+         (select :foo (where
+                       (and (keyalias > 1)
+                            (<= keyalias 2)))))))
 
 (deftest indexes-query
-  (is (= "SELECT * FROM foo WHERE KEY = foo AND name>1 AND pwd='password' AND gender='male'"
-         (select :foo (where
-                       (pk :foo)
-                       (columns [:$gt "name" 1]
-                                [:$eq "pwd" "password"]
-                                [:$eq "gender" "male"]))))))
+  (is (= "SELECT * FROM foo WHERE key = foo and name > 1 and pwd = 'password' and gender = 'male'"
+         (select :foo
+                 (where
+                  (and
+                   (= key :foo)
+                   (> :name 1)
+                   (= :pwd "password")
+                   (= :gender "male")))))))
 
 (deftest insert-query
-  (is (="INSERT INTO foo (KEY, bar, alpha) VALUES (123, 'baz', 'beta') USING CONSISTENCY QUORUM AND TIMESTAMP 123123 AND TTL 123"
+  (is (="INSERT INTO foo (key, bar, alpha) VALUES (123, 'baz', 'beta') USING CONSISTENCY QUORUM and TIMESTAMP 123123 and TTL 123"
         (insert :foo
-                (pk 123)
+                (= key 123)
                 (values {:bar "baz"
                          :alpha "beta"})
                 (using  :consistency :QUORUM
@@ -81,9 +88,9 @@
                         :TTL 123)))))
 
 (deftest update-query
-  (is (=  "UPDATE foo USING CONSISTENCY QUORUM AND TIMESTAMP 123123 AND TTL 123 SET col1 = 'value1', col2 = 'value2' WHERE pk-alias = 1"
+  (is (=  "UPDATE foo USING CONSISTENCY QUORUM and TIMESTAMP 123123 and TTL 123 SET col1 = 'value1', col2 = 'value2' WHERE key-alias = 1"
           (update :foo
-                  (where (pk :pk-alias 1))
+                  (where (= key-alias 1))
                   (using  :consistency :QUORUM
                           :timestamp 123123
                           :TTL 123)
@@ -92,31 +99,32 @@
                     :col2 "value2"})))
 
       ;;counter query
-      (= "UPDATE foo USING CONSISTENCY QUORUM AND TIMESTAMP 123123 AND TTL 123 SET col1 = 'value1', col2 = 'value2', col3 = col3 + 100 WHERE pk-alias = 1"
-         (update :foo
-                 (where (pk :pk-alias 1))
-                 (using  :consistency :QUORUM
-                         :timestamp 123123
-                         :TTL 123)
-                 (values
-                  {:col1 "value1"
-                   :col2 "value2"
-                   :col3 {:$incr 100}})))))
+      ;; (= "UPDATE foo USING CONSISTENCY QUORUM and TIMESTAMP 123123 and TTL 123 SET col1 = 'value1', col2 = 'value2', col3 = col3 + 100 WHERE pk-alias = 1"
+      ;;    (update :foo
+      ;;            (where (= pk-alias 1))
+      ;;            (using  :consistency :QUORUM
+      ;;                    :timestamp 123123
+      ;;                    :TTL 123)
+      ;;            (values
+      ;;             {:col1 "value1"
+      ;;              :col2 "value2"
+      ;;              :col3 (+= 100)})))
+      ))
 
 (deftest delete-query
   (is (= "DELETE FROM foo USING CONSISTENCY QUORUM WHERE pk-alias = 1"
          (delete :foo
                  (columns [:a :b])
-                 (where (pk :pk-alias 1))
+                 (where (= pk-alias 1))
                  (using  :consistency :QUORUM)))))
 
 
 (deftest batch-query
-  (is (= "BATCH BEGIN\n SELECT * FROM foo;INSERT INTO foo (KEY, bar, alpha) VALUES (123, 'baz', 'beta') USING CONSISTENCY QUORUM AND TIMESTAMP 123123 AND TTL 123;DELETE FROM foo USING CONSISTENCY QUORUM WHERE pk-alias = 1 \nAPPLY BATCH"
+  (is (= "BATCH BEGIN\n SELECT * FROM foo;INSERT INTO foo (key, bar, alpha) VALUES (123, 'baz', 'beta') USING CONSISTENCY QUORUM and TIMESTAMP 123123 and TTL 123;DELETE FROM foo USING CONSISTENCY QUORUM WHERE pk-alias = 1 \nAPPLY BATCH"
          (batch
           (select :foo)
           (insert :foo
-                  (pk 123)
+                  (= key 123)
                   (values {:bar "baz"
                            :alpha "beta"})
                   (using  :consistency :QUORUM
@@ -124,5 +132,5 @@
                           :TTL 123))
           (delete :foo
                   (columns [:a :b])
-                  (where (pk :pk-alias 1))
+                  (where (= pk-alias 1))
                   (using  :consistency :QUORUM))))))

@@ -17,9 +17,8 @@
 (defn limit [n]
   {:limit n})
 
-(defn where [& args]
-  {:where
-   (apply-merge args)})
+(defmacro where [& args]
+  `{:where '~args})
 
 (defn pk [& value]
   {:pk value})
@@ -35,19 +34,19 @@
    ["SELECT" :fields "FROM" :column-family :where :using :limit]
    (apply-merge
     {:column-family column-family
-     :fields [["*"]]}
+     :fields [[:*]]}
     steps)))
 
-(defn insert [column-family & steps]
-  (let [steps-map (apply-merge steps)]
+(defmacro insert [column-family pk & steps]
+  `(let [steps-map# (apply-merge ~@steps)]
     (cql/make-query
-     ["INSERT INTO" :column-family :insert-values :using]
-     (merge
-      {:column-family column-family
-       :insert-values
-       {:row (:pk steps-map)
-        :values (:values steps-map)}}
-      (dissoc steps-map :values :pk)))))
+      ["INSERT INTO" :column-family :insert-values :using]
+      (merge
+       {:column-family ~column-family
+        :insert-values
+        {:row '~pk
+         :values (:values steps-map#)}}
+       (dissoc steps-map# :values :pk)))))
 
 (defn update [column-family & steps]
   (let [step-map (apply-merge steps)]

@@ -25,104 +25,94 @@ can have one of arbitrary depth.
 
 ### SELECT
 
-    (select :user
-         (limit 100)
-         (using  :concistency :QUORUM
-                 :timestamp 123123
-                 :TTL 123)
-
-         ;; using a column range with optional parameters first and reversed
-         (fields (as-range :a :b)
-                  :reversed true
-                  :first 100)
-
-         ;; variant using name columns
-         ;; (fields [:a :b "c" 12]
-         ;;          :reversed true
-         ;;          :first 100)
-
-         ;; if you dont provide a "fields" fn it will default to *
-
-         ;; count()
-         (fields ["count()"])
+    ;; simple key lookup
+    (select :foo (where (= key "bar")))
 
 
+    ;; query for list of keys
+    (select :foo (where (in keyalias [1 2 "baz" :bar])))))
+
+
+    ;; range of keys
+    (select :foo (where (and (> key 1) (key <= 2))))
+
+
+    ;; key + column index
+    (select :foo
          (where
+          (and
+           (= key :foo)
+           (> :name 1)
+           (= :pwd "password")
+           (= :gender "male"))))
 
-         ;; the row key can be provided in different formats or can be a filter on keys
-          (pk 1)
 
-          ;; (pk "a")
+    ;; field selection
+    (select :foo (fields [:bar "baz"]))
 
-          ;; KEY IN ...
-          ;; (pk [1 2 "a" 4])
 
-          ;; aliased key
-          ;; (pk :kalias1 1)
-          ;; (pk :kalias1 "a")
+    ;; field N range
+    (select :foo (fields :reversed true
+                         :first 100))
 
-          ;; mix of aliased key + <KEY> IN ...
-          ;; (pk :kalias1 [1 2 3 4])
-          ;; (pk :kalias1 [1 2 "a" 4])
 
-          ;; key range
-          ;; (pk {:$gt 1 :lte 2})
-          ;; (pk {:$gt 1})
+    ;; column range
+    (select :foo (fields (as-range :a :b)))
 
-          ;; key range + alias
-          ;; (pk :keyalias1
-          ;;     {:$gt 1})
-          ;; (pk :alias {:$gt 1 :lt 2})
 
-          ;; secondary indexes
-          (columns [:$gt "name" 1]
-                   [:$eq "pwd" "password"]
-                   [:$eq "gender" "male"])))))
+    ;; passing additional options (valid for any query type)
+    (select :foo (using :consistency :QUORUM
+                        :timestamp 123123
+                        :TTL 123))
 
+and more...
 
 ### INSERT
 
-    (insert :users
-
-            ;; same format and options as in the select query example
-            (pk :pk-alias 1)
-
-            ;; optional
-            (using  :concistency :QUORUM
-                    :timestamp 123123
-                    :TTL 123)
-
-            ;; colums to be inserted,
-            (values
-            {:col1 :test
-             :col2 "value2"}))
+    (insert :foo
+             (= key 123)
+             (values {:bar "baz"
+                      :alpha "beta"})
+             (using  :consistency :QUORUM
+                     :timestamp 123123
+                     :TTL 123))
 
 
 ### UPDATE
 
-    (update :users
-            (where (pk :pk-alias 1))
-                   (using  :concistency :QUORUM
-                           :timestamp 123123
-                           :TTL 123)
-                   (values
-                    {:col1 :value1
-                     :col2 :value2
-                     :col3 {:$incr 10}}))
+    (update :foo
+            (where (= key-alias 1))
+            (using  :consistency :QUORUM
+                    :timestamp 123123
+                    :TTL 123)
+            (values
+             {:col1 "value1"
+              :col2 "value2"}))
 
 ### DELETE
 
-    (delete :users
+    (delete :foo
             (columns [:a :b])
-            (where (pk :pk-alias 1))
-            (using  :concistency :QUORUM))
+            (where (= pk-alias 1))
+            (using  :consistency :QUORUM))
+
+### BATCH
+
+    (batch
+        (select :foo)
+        (insert :foo
+                (= key 123)
+                (values {:bar "baz"
+                         :alpha "beta"})
+                (using  :consistency :QUORUM
+                        :timestamp 123123
+                        :TTL 123))
+        (delete :foo
+                (columns [:a :b])
+                (where (= pk-alias 1))
+                (using  :consistency :QUORUM)))
 
 More details about query formats [here](https://github.com/mpenet/thera/blob/master/test/thera/test/query.clj)
-
-### Parameterised queries
-
-Positional notation is possible using "?" values, named notation
-should be possible using keywords (untested).
 
 
 ## CLIENT
