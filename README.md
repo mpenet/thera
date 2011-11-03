@@ -150,6 +150,7 @@ and more...
 => "DELETE a, b FROM foo USING CONSISTENCY QUORUM WHERE pkalias = 1"
 
 ### BATCH
+
 ```clojure
 (batch
     (select :foo)
@@ -210,7 +211,8 @@ There are 3 decoder availables at the moment:
 
 ### Extending the decoders
 
-You can add your own decoder as follows:
+You can add your own decoder:
+
 ```clojure
 (defmethod decode-result :mydecoder
   [^CResultSet rs _ & args]
