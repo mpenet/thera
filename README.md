@@ -41,7 +41,7 @@ can have one of arbitrary depth.
 
 ```clojure
 ;; Range of keys
-(select :foo (where (and (> key 1) (key <= 2))))
+(select :foo (where (and (> key 1) (<= key 2))))
 
 => "SELECT * FROM foo WHERE key > 1 and key <= 2"
 ```

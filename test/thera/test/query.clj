@@ -55,7 +55,7 @@
 
   (is (= "SELECT * FROM foo WHERE key > 1 and key <= 2"
          (select :foo (where (and (> key 1)
-                                  (key <= 2))))))
+                                  (<= key 2))))))
 
 
   (is (= "SELECT * FROM foo WHERE keyalias > 1"
