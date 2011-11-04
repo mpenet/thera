@@ -66,14 +66,6 @@
   [_ ^HeapByteBuffer value]
   (.. JdbcUUID/instance (compose value)))
 
-(defmethod decode :lexical-uuid
-  [_ ^HeapByteBuffer value]
-  (.. JdbcLexicalUUID/instance (compose value)))
-
-(defmethod decode :time-uuid
-  [_ ^HeapByteBuffer value]
-  (.. JdbcTimeUUID/instance (compose value)))
-
 (defmethod decode :date
   [_ ^HeapByteBuffer value]
   (.. JdbcDate/instance (compose value)))
@@ -91,73 +83,51 @@
   (-> value (decode :utf-8) read-string))
 
 
+(def BytesType (Class/forName "[B"))
 
-(defmulti encode (fn [type value] type))
+(defprotocol PCodecEncoder
+  (encode [v] ))
 
-(defmethod encode :ascii
-  [_ ^String value]
-  (wrap-quotes (.. JdbcAscii/instance (toString value))))
+(extend-protocol PCodecEncoder
 
-(defmethod encode :utf-8
-  [_ ^String value]
-  (wrap-quotes (.. JdbcUTF8/instance (toString value))))
+  ;; utf-8 & ascii
+  String
+  (encode [value]
+    (wrap-quotes (.. JdbcUTF8/instance (toString value))))
 
-(defmethod encode :integer
-  [_ ^Integer value]
-  (.. JdbcInteger/instance (toString value)))
+  Integer
+  (encode [value]
+    (.. JdbcInteger/instance (toString value)))
 
-(defmethod encode :int32
-  [_ ^Integer value]
-  (.. JdbcInt32/instance (toString value)))
+  ;; counters & longs
+  Long
+  (encode [value]
+    (.. JdbcLong/instance (toString value)))
 
-(defmethod encode :long
-  [_ ^Long value]
-  (.. JdbcLong/instance (toString value)))
+  Float
+  (encode [value]
+    (.. JdbcFloat/instance (toString value)))
 
-(defmethod encode :float
-  [_ ^Float value]
-  (.. JdbcFloat/instance (toString value)))
+  Double
+  (encode [value]
+    (.. JdbcDouble/instance (toString value)))
 
-(defmethod encode :double
-  [_ ^Double value]
-  (.. JdbcDouble/instance (toString value)))
+  BytesType
+  (encode [value]
+    (wrap-quotes (.. JdbcBytes/instance (toString value))))
 
-(defmethod encode :bytes
-  [_ ^"[B" value]
-  (wrap-quotes (.. JdbcBytes/instance (toString value))))
+  BigDecimal
+  (encode [value]
+    (.. JdbcDecimal/instance (toString value)))
 
-(defmethod encode :counter
-  [_ ^Long value]
-  (.. JdbcCounterColumn/instance (toString value)))
+  UUID
+  (encode [value]
+    (.. JdbcUUID/instance (toString value)))
 
-(defmethod encode :decimal
-  [_ ^BigDecimal value]
-  (.. JdbcDecimal/instance (toString value)))
+  Date
+  (encode [value]
+    (.. JdbcDate/instance (toString value)))
 
-(defmethod encode :uuid
-  [_ ^UUID value]
-  (.. JdbcUUID/instance (toString value)))
-
-(defmethod encode :lexical-uuid
-  [_ ^UUID value]
-  (.. JdbcLexicalUUID/instance (toString value)))
-
-(defmethod encode :time-uuid
-  [_ ^UUID value]
-  (.. JdbcTimeUUID/instance (toString value)))
-
-(defmethod encode :date
-  [_ ^Date value]
-  (.. JdbcDate/instance (toString value)))
-
-(defmethod encode :bool
-  [_ ^Boolean value]
-  (.. JdbcBoolean/instance (toString  value)))
-
-(defmethod encode :json
-  [_ value]
-  (-> value json/generate-string wrap-quotes))
-
-(defmethod encode :clj
-  [_  value]
-  (-> value prn wrap-quotes))
+  Boolean
+  (encode [value]
+    (.. JdbcBoolean/instance (toString value))))
