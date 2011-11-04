@@ -64,7 +64,7 @@
 
   (is (= "SELECT * FROM foo WHERE keyalias > 1 and keyalias <= 2"
          (select :foo (where
-                       (and (keyalias > 1)
+                       (and (> keyalias 1)
                             (<= keyalias 2)))))))
 
 (deftest indexes-query
