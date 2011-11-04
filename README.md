@@ -148,7 +148,7 @@ and more...
         (using  :consistency :QUORUM))
 
 => ["DELETE a, b FROM foo USING CONSISTENCY QUORUM WHERE pkalias = ?" [1]]
-
+```
 
 Parameterization is done depending on the type of the argument, it is considered safe and stays in the query only when it is a keyword or a symbol, otherwise it gets replaced by ? and it s value would be in the second vector.
 
