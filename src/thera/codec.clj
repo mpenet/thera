@@ -1,12 +1,13 @@
 (ns thera.codec
   (:require [clj-json.core :as json])
-  (:import
-   [java.nio HeapByteBuffer]
-   [org.apache.cassandra.cql.jdbc
-    JdbcAscii JdbcUTF8 JdbcInteger JdbcInt32 JdbcLong JdbcDouble JdbcFloat
-    JdbcBytes JdbcCounterColumn JdbcDecimal JdbcUUID JdbcLexicalUUID
-    JdbcTimeUUID JdbcDate JdbcBoolean]
-   [org.apache.cassandra.utils ByteBufferUtil]))
+  (:import [java.nio HeapByteBuffer]
+           [java.util UUID Date]
+           [org.apache.cassandra.cql.jdbc
+            JdbcAscii JdbcUTF8 JdbcInteger JdbcInt32 JdbcLong JdbcDouble JdbcFloat
+            JdbcBytes JdbcCounterColumn JdbcDecimal JdbcUUID JdbcLexicalUUID
+            JdbcTimeUUID JdbcDate JdbcBoolean]
+           [org.apache.cassandra.utils ByteBufferUtil]))
+
 
 (defn hex->bytes
   [hex]
@@ -15,6 +16,9 @@
 (defn bytes->hex
   [bytes]
   (ByteBufferUtil/bytesToHex bytes))
+
+(def wrap-quotes (partial format "'%s'"))
+
 
 (defmulti decode (fn [type ^HeapByteBuffer value] type))
 
@@ -87,30 +91,73 @@
   (-> value (decode :utf-8) read-string))
 
 
-;; (defmulti encode (fn [type value] type))
 
-;; (defmethod encode :string
-;;   [_ value]
-;;   (-> (.getBytes value) bytes->hex))
+(defmulti encode (fn [type value] type))
 
-;; (defmethod encode :integer
-;;   [_ value]
-;;   (-> value FBUtilities/toByteArray bytes->hex))
+(defmethod encode :ascii
+  [_ ^String value]
+  (wrap-quotes (.. JdbcAscii/instance (toString value))))
 
-;; (defmethod encode :long
-;;   [_ value]
-;;   (-> value FBUtilities/toByteArray bytes->hex))
+(defmethod encode :utf-8
+  [_ ^String value]
+  (wrap-quotes (.. JdbcUTF8/instance (toString value))))
 
-;; (defmethod encode :json
-;;   [_ value]
-;;   (-> value json/generate-string (encode :string)))
+(defmethod encode :integer
+  [_ ^Integer value]
+  (.. JdbcInteger/instance (toString value)))
 
-;; (defmethod encode :clj
-;;   [_ value]
-;;   (-> value prn (encode :string)))
+(defmethod encode :int32
+  [_ ^Integer value]
+  (.. JdbcInt32/instance (toString value)))
 
-;; (defmethod encode :uuid
-;;   [_ value]
-;;   (encode :string value))
+(defmethod encode :long
+  [_ ^Long value]
+  (.. JdbcLong/instance (toString value)))
 
-;; (defmethod encode :default [_ value] value)
+(defmethod encode :float
+  [_ ^Float value]
+  (.. JdbcFloat/instance (toString value)))
+
+(defmethod encode :double
+  [_ ^Double value]
+  (.. JdbcDouble/instance (toString value)))
+
+(defmethod encode :bytes
+  [_ ^"[B" value]
+  (wrap-quotes (.. JdbcBytes/instance (toString value))))
+
+(defmethod encode :counter
+  [_ ^Long value]
+  (.. JdbcCounterColumn/instance (toString value)))
+
+(defmethod encode :decimal
+  [_ ^BigDecimal value]
+  (.. JdbcDecimal/instance (toString value)))
+
+(defmethod encode :uuid
+  [_ ^UUID value]
+  (.. JdbcUUID/instance (toString value)))
+
+(defmethod encode :lexical-uuid
+  [_ ^UUID value]
+  (.. JdbcLexicalUUID/instance (toString value)))
+
+(defmethod encode :time-uuid
+  [_ ^UUID value]
+  (.. JdbcTimeUUID/instance (toString value)))
+
+(defmethod encode :date
+  [_ ^Date value]
+  (.. JdbcDate/instance (toString value)))
+
+(defmethod encode :bool
+  [_ ^Boolean value]
+  (.. JdbcBoolean/instance (toString  value)))
+
+(defmethod encode :json
+  [_ value]
+  (-> value json/generate-string wrap-quotes))
+
+(defmethod encode :clj
+  [_  value]
+  (-> value prn wrap-quotes))
