@@ -2,6 +2,20 @@
   ^{:doc "Query maps to CQL transformations"}
   (:use [clojure.string :only [upper-case join]]))
 
+
+(def ^{:dynamic true} *params*)
+
+(defn set-param! [value]
+  (swap! *params* conj value)
+  "?")
+
+;; CQL special functions and operators
+
+(def operators ['- '+ '= '> '< '<= '>= 'and 'or 'in])
+(def fns {:count-fn "count()"})
+
+;; string manip helpers
+
 (def join-and (partial join " and "))
 (def join-spaced (partial join " "))
 (def join-coma (partial join ", "))
@@ -9,8 +23,32 @@
 (defprotocol PEncoder
   (encode [value]))
 
-(def operators ['- '+ '= '> '< '<= '>= 'and 'or 'in])
-(def fns {:count-fn "count()"})
+(extend-protocol PEncoder
+
+  clojure.lang.Symbol
+  (encode [value] (str value))
+
+  clojure.lang.Keyword
+  (encode [value]
+    (get fns value (name value)))
+
+  clojure.lang.Sequential
+  (encode [value]
+    (format "(%s)" (join-coma (map encode value))))
+
+  clojure.lang.IPersistentMap
+  (encode [value]
+    (->> value
+         (map (fn [[k v]] (format "%s = %s"
+                                  (encode k)
+                                  (encode v))))
+         join-coma))
+
+  java.lang.Object
+  (encode [value] (set-param! value)))
+
+
+;; form transforms
 
 (defn prefix->infix
   [[op & rest]]
@@ -29,30 +67,8 @@
       (walk-form el)
       (encode el))))
 
-(extend-protocol PEncoder
 
-  java.lang.String
-  (encode
-    [value]
-    (format "'%s'" value))
-
-  clojure.lang.Keyword
-  (encode [value]
-    (get fns value (name value)))
-
-  clojure.lang.Sequential
-  (encode [value]
-    (format "(%s)" (join-coma (map encode value))))
-
-  clojure.lang.IPersistentMap
-  (encode [value]
-    (->> (map (fn [[k v]] (format "%s = %s"
-                                  (encode k)
-                                  (encode v))) value)
-         (join-coma)))
-
-  java.lang.Object
-  (encode [value] value))
+;; CQL Query translation
 
 (defmulti translate (fn [token value] token))
 
@@ -117,14 +133,14 @@
                              (encode k)
                              (encode v))))
                  values)
-            (join-coma))))
+            join-coma)))
 
 (defmethod translate :counter [_ [field-name [op value]]]
   (format "%s = %s %s %s"
           (encode field-name)
           (encode field-name)
           op
-          value))
+          (encode value)))
 
 (defmethod translate  :limit
   [_ limit]
@@ -135,12 +151,13 @@
 
 (defn make-query
   [template query]
-;;  (println "Q:" query)
-  (->> (map (fn [token]
-              (if (string? token)
-                token
-                (when-let [value (token query)]
-                  (translate token value))))
-            template)
-       (filter identity)
-       join-spaced))
+  (binding [*params* (atom [])]
+    [(->> (map (fn [token]
+                 (if (string? token)
+                   token
+                   (when-let [value (token query)]
+                     (translate token value))))
+               template)
+          (filter identity)
+          join-spaced)
+     @*params*]))

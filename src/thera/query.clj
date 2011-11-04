@@ -32,7 +32,7 @@
      (or ~@steps))))
 
 (defmacro insert [column-family pk & steps]
-  `(let [steps-map# (apply-merge ~@steps)]
+  `(let [steps-map# (apply-merge {} ~@steps)]
     (cql/make-query
       ["INSERT INTO" :column-family :insert-values :using]
       (merge

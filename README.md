@@ -29,21 +29,21 @@ can have one of arbitrary depth.
 ;; Simple key lookup
 (select :foo (where (= key "bar")))
 
-=> "SELECT * FROM foo WHERE key = 'bar'"
+=> ["SELECT * FROM foo WHERE key = ?" ["bar"]]
 ```
 
 ```clojure
 ;; Query for list of keys
 (select :foo (where (in keyalias [1 2 "baz" :bar])))))
 
-=> "SELECT * FROM foo WHERE keyalias in (1, 2, 'baz', bar)"
+=> ["SELECT * FROM foo WHERE keyalias in (?, ?, ?, bar)" [1 2 "baz"]]
 ```
 
 ```clojure
 ;; Range of keys
 (select :foo (where (and (> key 1) (<= key 2))))
 
-=> "SELECT * FROM foo WHERE key > 1 and key <= 2"
+=> ["SELECT * FROM foo WHERE key > ? and key <= ?" [1 2]]
 ```
 
 ```clojure
@@ -56,14 +56,14 @@ can have one of arbitrary depth.
        (= :pwd "password")
        (= :gender "male"))))
 
-=> "SELECT * FROM foo WHERE key = foo and name > 1 and pwd = 'password' and gender = 'male'"
+=> ["SELECT * FROM foo WHERE key = foo and name > ? and pwd = ? and gender = ?" [1 "password" "male"]]
 ```
 
 ```clojure
 ;; Field selection
 (select :foo (fields [:bar "baz"]))
 
-=> "SELECT bar, 'baz' FROM foo"
+=>  ["SELECT bar, ? FROM foo" ["baz"]]
 ```
 
 ```clojure
@@ -78,7 +78,7 @@ can have one of arbitrary depth.
 ;; Column range
 (select :foo (fields (as-range :a :b)))
 
-=> "SELECT a...b FROM foo"
+=> ["SELECT a...b FROM foo" []]
 ```
 
 ```clojure
@@ -86,7 +86,7 @@ can have one of arbitrary depth.
 (select :foo (using :consistency :QUORUM
                     :timestamp 123123
                     :TTL 123))
-=> "SELECT * FROM foo USING CONSISTENCY QUORUM and TIMESTAMP 123123 and TTL 123"
+=> ["SELECT * FROM foo USING CONSISTENCY QUORUM and TIMESTAMP ? and TTL ?" [123123 123]]
 ```
 
 
@@ -94,7 +94,7 @@ can have one of arbitrary depth.
 ;; Functions
 (select :foo (fields [:count-fn]))
 
-=> "SELECT count() FROM foo"
+=> ["SELECT count() FROM foo" []]
 ```
 
 and more...
@@ -110,7 +110,7 @@ and more...
          (using  :consistency :QUORUM
                  :timestamp 123123
                  :TTL 123))
-=> "INSERT INTO foo (key, bar, alpha) VALUES (123, 'baz', 'beta') USING CONSISTENCY QUORUM and TIMESTAMP 123123 and TTL 123"
+=> ["INSERT INTO foo (key, bar, alpha) VALUES (?, ?, ?) USING CONSISTENCY QUORUM and TIMESTAMP ? and TTL ?" [123 "baz" "beta" 123123 123]]
 ```
 
 ### UPDATE
@@ -136,7 +136,7 @@ and more...
            :col2 "value2"
            :col3 (+ 100)}))
 
-=> "UPDATE foo SET col1 = 'value1', col2 = 'value2', col3 = col3 + 100 WHERE pkalias = 1"
+=> ["UPDATE foo SET col1 = ?, col2 = ?, col3 = col3 + ? WHERE pkalias = ?" ["value1" "value2" 100 1]]
 ```
 
 ### DELETE
@@ -147,30 +147,10 @@ and more...
         (where (= pkalias 1))
         (using  :consistency :QUORUM))
 
-=> "DELETE a, b FROM foo USING CONSISTENCY QUORUM WHERE pkalias = 1"
+=> ["DELETE a, b FROM foo USING CONSISTENCY QUORUM WHERE pkalias = ?" [1]]
 
-### BATCH
 
-```clojure
-(batch
-    (select :foo)
-    (insert :foo
-            (= key 123)
-            (values {:bar "baz"
-                     :alpha "beta"})
-            (using  :consistency :QUORUM
-                    :timestamp 123123
-                    :TTL 123))
-    (delete :foo
-            (fields [:a :b])
-            (where (= pkalias 1))
-            (using  :consistency :QUORUM)))
-
-=> "BATCH BEGIN
-        SELECT * FROM foo;INSERT INTO foo (key, bar, alpha) VALUES (123, 'baz', 'beta') USING CONSISTENCY QUORUM and TIMESTAMP 123123 and TTL 123;
-        DELETE a, b FROM foo USING CONSISTENCY QUORUM WHERE pkalias = 1
-    APPLY BATCH"
-```
+Parameterization is done depending on the type of the argument, it is considered safe and stays in the query only when it is a keyword or a symbol, otherwise it gets replaced by ? and it s value would be in the second vector.
 
 More details about query formats [here](https://github.com/mpenet/thera/blob/master/test/thera/test/query.clj)
 
@@ -274,7 +254,7 @@ Defaults to :bytes
 
 ## TODO
 
-* Parameterised query ("?" by default, as-cql fn etc)
+* composable (read non macro version) of base cql verbs with attributes merging
 
 * DDL (CREATE, ALTER, TRUNCATE, DROP)
 
