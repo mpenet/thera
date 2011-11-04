@@ -66,6 +66,14 @@
   [_ ^HeapByteBuffer value]
   (.. JdbcUUID/instance (compose value)))
 
+(defmethod decode :lexical-uuid
+  [_ ^HeapByteBuffer value]
+  (.. JdbcLexicalUUID/instance (compose value)))
+
+(defmethod decode :time-uuid
+  [_ ^HeapByteBuffer value]
+  (.. JdbcTimeUUID/instance (compose value)))
+
 (defmethod decode :date
   [_ ^HeapByteBuffer value]
   (.. JdbcDate/instance (compose value)))
@@ -74,13 +82,17 @@
   [_ ^HeapByteBuffer value]
   (.. JdbcBoolean/instance (compose value)))
 
-(defmethod decode :json
-  [_ ^HeapByteBuffer value]
-  (-> value (decode :utf-8) (json/parse-string true)))
+;; (defmethod decode :json
+;;   [_ ^HeapByteBuffer value]
+;;   (-> value (decode :utf-8) (json/parse-string true)))
 
-(defmethod decode :clj
+;; (defmethod decode :clj
+;;   [_ ^HeapByteBuffer value]
+;;   (-> value (decode :utf-8) read-string))
+
+(defmethod decode :default
   [_ ^HeapByteBuffer value]
-  (-> value (decode :utf-8) read-string))
+  (.. JdbcBytes/instance (compose value)))
 
 
 (def BytesType (Class/forName "[B"))
@@ -130,4 +142,8 @@
 
   Boolean
   (encode [value]
-    (.. JdbcBoolean/instance (toString value))))
+    (.. JdbcBoolean/instance (toString value)))
+
+  Object
+  (encode [value]
+    (wrap-quotes (.. JdbcBytes/instance (toString value)))))
