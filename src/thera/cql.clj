@@ -36,7 +36,7 @@
 
 (defn realize-pred-form
   [form]
-  (eval (walk/prewalk-replace predicates) form))
+  (eval (walk/prewalk-replace predicates form)))
 
 (def fns {:count-fn "count()"})
 
