@@ -30,7 +30,7 @@
 (defn bind-parameters
   [^PreparedStatement statement params]
   (doseq [i (range 0 (count params))]
-    (.setObject statement i (codec/encode (params i))))
+    (.setObject statement (inc i) (params i)))
   statement)
 
 (defn execute
@@ -72,7 +72,7 @@
   [^TypedColumn col]
   (.. col getRawColumn name))
 
-(defn ^"[B" row-key
+(defn ^HeapByteBuffer row-key
   [^CResultSet rs]
   (java.nio.ByteBuffer/wrap (.getKey rs)))
 
