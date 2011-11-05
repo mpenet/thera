@@ -124,7 +124,7 @@ and more...
          {:col1 "value1"
           :col2 "value2"}))
 
-=> "UPDATE foo USING CONSISTENCY QUORUM and TIMESTAMP 123123 and TTL 123 SET col1 = 'value1', col2 = 'value2' WHERE keyalias = 1"
+=> ["UPDATE foo USING CONSISTENCY QUORUM and TIMESTAMP ? and TTL ? SET col1 = ?, col2 = ? WHERE keyalias = ?" [123123 123 "value1" "value2" 1]]
 ```
 
 ```clojure
