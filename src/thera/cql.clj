@@ -36,9 +36,7 @@
 
 (defn realize-pred-form
   [form]
-  (->> form
-       (walk/prewalk-replace predicates)
-       eval))
+  (eval (walk/prewalk-replace predicates) form))
 
 (def fns {:count-fn "count()"})
 
@@ -140,7 +138,7 @@
        join-spaced))
 
 (defmethod translate :insert-values [_ {:keys [row values]}]
-  (format"%s VALUES %s"
+  (format "%s VALUES %s"
          (->> values keys (cons (second row)) encode)
          (->> values vals (cons (last row)) encode)))
 
