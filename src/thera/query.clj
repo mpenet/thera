@@ -18,7 +18,7 @@
   {:limit n})
 
 (defmacro where [args]
-  `{:where ~(cql/apply-transforms  args)})
+  `{:where ~(cql/apply-transforms args)})
 
 (defmacro values [values]
   `{:values '~values})

@@ -30,7 +30,8 @@
 (defn bind-parameters
   [^PreparedStatement statement params]
   (doseq [i (range 0 (count params))]
-    (.setObject statement i (codec/encode (params i)))))
+    (.setObject statement i (codec/encode (params i))))
+  statement)
 
 (defn execute
   [^PreparedStatement statement]
