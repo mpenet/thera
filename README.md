@@ -247,13 +247,6 @@ Defaults to :bytes
 
 (defmethod decode :csv [_ value]
   (you-csv-decoder-fn (String. value "UTF-8")))
-
-;; and you need to create an encoder, with it's own type (for later parameter binding)
-
-(extend-protocol PCodecEncoder
-  CSVDocType
-  (encode [doc] (serialize-csv-to-str value)))
-
 ```
 
 ## INSTALLATION
