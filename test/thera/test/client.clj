@@ -45,3 +45,6 @@
 
 
 (println  (select :foo (where (in key [1 2 "baz" :bar]))))
+
+
+(println (select :foo (where (= key (java.util.UUID/fromString "1438fc5c-4ff6-11e0-b97f-0026c650d722")))))

@@ -81,7 +81,8 @@
          join-coma))
 
   java.lang.Object
-  (encode [value] (set-param! value)))
+  (encode [value]
+    (set-param! value)))
 
 ;; CQL Query translation
 
@@ -98,7 +99,7 @@
                          [(first args) (rest args)]
                          [nil args])]
     (->> [(when (seq opts) (translate :fields-options (apply array-map opts)))
-         (when (seq columns) (translate :fields-value columns))]
+          (when (seq columns) (translate :fields-value columns))]
          (filter identity)
          join-spaced)))
 
@@ -132,7 +133,6 @@
 
 (defmethod translate :where
   [_ [where]]
-
   (->> (realize-pred-form where)
        flatten-seq
        (map encode)
@@ -141,8 +141,8 @@
 
 (defmethod translate :insert-values [_ {:keys [row values]}]
   (format"%s VALUES %s"
-          (->> values keys (cons (second row)) encode)
-          (->> values vals (cons (last row)) encode)))
+         (->> values keys (cons (second row)) encode)
+         (->> values vals (cons (last row)) encode)))
 
 (defmethod translate :set [_ values]
   (str "SET "
