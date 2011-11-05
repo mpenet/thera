@@ -34,7 +34,7 @@ can have one of arbitrary depth.
 
 ```clojure
 ;; Query for list of keys
-(select :foo (where (in :keyalias [1 2 "baz" :bar])))))
+(select :foo (where (in :keyalias [1 2 (str "ba" "z") :bar])))))
 
 => ["SELECT * FROM foo WHERE keyalias in (?, ?, ?, bar)" [1 2 "baz"]]
 ```
