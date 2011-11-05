@@ -34,9 +34,9 @@
    'in 'thera.cql/in*
    'key :key})
 
-(defn realize-pred-form
+(defn apply-transforms
   [form]
-  (eval (walk/prewalk-replace predicates form)))
+  (walk/prewalk-replace predicates form))
 
 (def fns {:count-fn "count()"})
 
@@ -51,7 +51,6 @@
   [x]
   (filter (complement seq?)
           (rest (tree-seq seq? seq x))))
-
 
 (defprotocol PEncoder
   (encode [value]))
@@ -130,8 +129,8 @@
                " " (encode value))))))
 
 (defmethod translate :where
-  [_ [where]]
-  (->> (realize-pred-form where)
+  [_ where]
+  (->> where
        flatten-seq
        (map encode)
        (cons "WHERE")
