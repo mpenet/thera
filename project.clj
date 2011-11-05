@@ -1,4 +1,4 @@
-(defproject thera "1.0.0-SNAPSHOT"
+(defproject thera "0.1.0-SNAPSHOT"
   :description "Thera - Clojure Cassandra library"
 
   :dependencies [[org.clojure/clojure "1.2.1"]

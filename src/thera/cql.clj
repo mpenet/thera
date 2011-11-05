@@ -1,7 +1,7 @@
 (ns thera.cql
   ^{:doc "Query maps to CQL transformations"}
-  (:use [clojure.string :only [upper-case join]]))
-
+  (:use [clojure.string :only [upper-case join]])
+  (:require [clojure.walk :as walk]))
 
 (def ^{:dynamic true} *params*)
 
@@ -11,7 +11,35 @@
 
 ;; CQL special functions and operators
 
-(def operators ['- '+ '= '> '< '<= '>= 'and 'or 'in])
+(defmacro definfix [op]
+  `(defn ~(-> op (str "*") symbol) [& args#]
+     (interpose ~(keyword op) args#)))
+
+(defmacro definfixn [& ops]
+  `(do ~@(doall (for [op# ops]
+                  `(definfix ~op#)))))
+
+(definfixn and or = - + < > <= >= in)
+
+(def predicates
+  {'- 'thera.cql/-*
+   '+ 'thera.cql/+*
+   '= 'thera.cql/=*
+   '> 'thera.cql/>*
+   '< 'thera.cql/<*
+   '<= 'thera.cql/<=*
+   '>= 'thera.cql/>=*
+   'and 'thera.cql/and*
+   'or 'thera.cql/or*
+   'in 'thera.cql/in*
+   'key :key})
+
+(defn realize-pred-form
+  [form]
+  (->> form
+       (walk/prewalk-replace predicates)
+       eval))
+
 (def fns {:count-fn "count()"})
 
 ;; string manip helpers
@@ -19,6 +47,13 @@
 (def join-and (partial join " and "))
 (def join-spaced (partial join " "))
 (def join-coma (partial join ", "))
+
+(defn flatten-seq
+  "Same as flatten, but ignores vectors"
+  [x]
+  (filter (complement seq?)
+          (rest (tree-seq seq? seq x))))
+
 
 (defprotocol PEncoder
   (encode [value]))
@@ -39,34 +74,14 @@
   clojure.lang.IPersistentMap
   (encode [value]
     (->> value
-         (map (fn [[k v]] (format "%s = %s"
-                                  (encode k)
-                                  (encode v))))
+         (map (fn [[k v]]
+                (format "%s = %s"
+                        (encode k)
+                        (encode v))))
          join-coma))
 
   java.lang.Object
   (encode [value] (set-param! value)))
-
-
-;; form transforms
-
-(defn prefix->infix
-  [[op & rest]]
-  (interpose op rest))
-
-(defn shuffle-op
-  [form]
-  (if (some #{(first form)} operators)
-    (prefix->infix form)
-    form))
-
-(defn walk-form
-  [form]
-  (for [el (shuffle-op form)]
-    (if (seq? el)
-      (walk-form el)
-      (encode el))))
-
 
 ;; CQL Query translation
 
@@ -116,11 +131,16 @@
                " " (encode value))))))
 
 (defmethod translate :where
-  [_ where]
-  (join-spaced (apply conj ["WHERE"] (flatten (walk-form where)))))
+  [_ [where]]
+
+  (->> (realize-pred-form where)
+       flatten-seq
+       (map encode)
+       (cons "WHERE")
+       join-spaced))
 
 (defmethod translate :insert-values [_ {:keys [row values]}]
-  (format "%s VALUES %s"
+  (format"%s VALUES %s"
           (->> values keys (cons (second row)) encode)
           (->> values vals (cons (last row)) encode)))
 

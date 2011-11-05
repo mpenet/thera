@@ -23,20 +23,25 @@
                            "KEY" :uuid
                            "username" :utf-8}}))
 
-(def s (-> (make-datasource {})
-             get-connection
-             (prepare-statement "SELECT * FROM user WHERE KEY=8")
-             execute
-             ;; (resultset->result :decoder :guess)
-             (decode-result :client-schema user-schema)))
+;; (def s (-> (make-datasource {})
+;;              get-connection
+;;              (prepare-statement "SELECT * FROM user WHERE KEY=8")
+;;              execute
+;;              ;; (resultset->result :decoder :guess)
+;;              (decode-result :client-schema user-schema)))
 
-;; (println (-> s :rows first :cols first :value type))
+;; ;; (println (-> s :rows first :cols first :value type))
 
-(def s (-> (make-datasource {})
-             get-connection
-             (prepare-statement "SELECT * FROM sample1")
-             execute
-             ;; (resultset->result :decoder :guess)
-             (decode-result :server-schema sample-schema)))
+;; (def s (-> (make-datasource {})
+;;              get-connection
+;;              (prepare-statement "SELECT * FROM sample1")
+;;              execute
+;;              ;; (resultset->result :decoder :guess)
+;;              (decode-result :server-schema sample-schema)))
 
-(pprint (-> s :rows))
+;; (pprint (-> s :rows))
+
+(println (select :foo (where (and (> :key (str "A" "A")) (= :keyalias (str "dwa" 1))))))
+
+
+(println  (select :foo (where (in key [1 2 "baz" :bar]))))

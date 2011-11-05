@@ -34,7 +34,7 @@ can have one of arbitrary depth.
 
 ```clojure
 ;; Query for list of keys
-(select :foo (where (in keyalias [1 2 "baz" :bar])))))
+(select :foo (where (in :keyalias [1 2 "baz" :bar])))))
 
 => ["SELECT * FROM foo WHERE keyalias in (?, ?, ?, bar)" [1 2 "baz"]]
 ```
@@ -116,7 +116,7 @@ and more...
 ### UPDATE
 ```clojure
 (update :foo
-        (where (= keyalias 1))
+        (where (= :keyalias 1))
         (using  :consistency :QUORUM
                 :timestamp 123123
                 :TTL 123)
@@ -130,7 +130,7 @@ and more...
 ```clojure
 ;; Update/increase with counter + regular columns
 (update :foo
-        (where (= pkalias 1))
+        (where (= :pkalias 1))
         (values
           {:col1 "value1"
            :col2 "value2"
@@ -144,13 +144,13 @@ and more...
 ```clojure
 (delete :foo
         (fields [:a :b])
-        (where (= pkalias 1))
+        (where (= :pkalias 1))
         (using  :consistency :QUORUM))
 
 => ["DELETE a, b FROM foo USING CONSISTENCY QUORUM WHERE pkalias = ?" [1]]
 ```
 
-Parameterization is done depending on the type of the argument, it is considered safe and stays in the query only when it is a keyword or a symbol, otherwise it gets replaced by ? and it s value would be in the second vector.
+Parameterization is done depending on the type of the argument, it is considered safe and stays in the query only when it is a keyword, otherwise it gets replaced by ? and it s value would be in the second vector.
 
 More details about query formats [here](https://github.com/mpenet/thera/blob/master/test/thera/test/query.clj)
 
@@ -164,9 +164,12 @@ something more idiomatic that will come later.
 ```clojure
 (use 'thera.client)
 
+(def cql-q (select :foo (where (= key (java.util.UUID/fromString "1438fc5c-4ff6-11e0-b97f-0026c650d722")))))
+
 (-> (make-datasource {:keyspace "foo"})
     get-connection
-    (prepare-statement "SELECT * FROM bar")
+    (prepare-statement (cql-q 0))
+    (bind-parameters (cql-q 1))
     execute
     (decode-result :server-schema))
 
@@ -233,7 +236,7 @@ This will return a schema instance that you can pass to decode.
 
 Supported types:
 
-`:utf-8` `:ascii` `:boolean` `:integer` `:int32` `:decimal`  `:long` `:float` `:double` `:json` `:clj` `:bytes` `:counter`  `:date`  `:uuid`   `:lexical-uuid`  `:time-uuid`
+`:utf-8` `:ascii` `:boolean` `:integer` `:int32` `:decimal`  `:long` `:float` `:double` `:bytes` `:counter`  `:date`  `:uuid`   `:lexical-uuid`  `:time-uuid`
 
 Defaults to :bytes
 
@@ -244,6 +247,13 @@ Defaults to :bytes
 
 (defmethod decode :csv [_ value]
   (you-csv-decoder-fn (String. value "UTF-8")))
+
+;; and you need to create an encoder, with it's own type (for later parameter binding)
+
+(extend-protocol PCodecEncoder
+  CSVDocType
+  (encode [doc] (serialize-csv-to-str value)))
+
 ```
 
 ## INSTALLATION
