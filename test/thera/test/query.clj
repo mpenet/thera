@@ -108,7 +108,7 @@
                        (set
                         {:col1 "value1"
                          :col2 "value2"
-                         :col3 (+ 100)}))))))
+                         :col3 (+= 100)}))))))
 
 (deftest delete-query
   (is (= ["DELETE a, b FROM foo USING CONSISTENCY QUORUM WHERE pk-alias = ?" [1]]

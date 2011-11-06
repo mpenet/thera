@@ -31,7 +31,18 @@
    'and 'thera.cql/and*
    'or 'thera.cql/or*
    'in 'thera.cql/in*
-   'key :key})
+   'key :key
+   '+= 'thera.cql/+=*
+   '-= 'thera.cql/-=*})
+
+(defn +=*
+  [value]
+  ['+ value])
+
+(defn -=*
+  [value]
+  ['- value])
+
 
 (def apply-transforms (partial walk/prewalk-replace predicates))
 
@@ -143,7 +154,7 @@
   [_ values]
   (str "SET "
        (->> (map (fn [[k v]]
-                   (if (seq? v) ;; counter
+                   (if (vector? v) ;; counter
                      (emit :counter [k v])
                      (format-eq (encode k) (encode v))))
                  values)
@@ -153,7 +164,8 @@
   [_ [field-name [op value]]]
   (format-eq (encode field-name)
              (join-spaced [(encode field-name)
-                           op (encode value)])))
+                           (encode op)
+                           (encode value)])))
 
 (defmethod emit  :limit
   [_ limit]

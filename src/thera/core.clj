@@ -51,7 +51,7 @@
   (assoc-in q [:query :values] values))
 
 (defmacro set [q values]
-  `(assoc-in ~q [:query :set] '~values))
+  `(assoc-in ~q [:query :set] ~(cql/apply-transforms values)))
 
 (defn data-source [q ds]
   (assoc q :data-source ds))
