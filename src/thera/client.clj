@@ -1,8 +1,6 @@
 (ns thera.client
   (:require [thera.codec :as codec])
-
   (:use [thera.schema])
-
   (:import [java.nio HeapByteBuffer]
    [java.sql DriverManager PreparedStatement]
            [org.apache.cassandra.cql.jdbc

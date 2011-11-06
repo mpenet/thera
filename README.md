@@ -206,7 +206,7 @@ It only requires to know a couple of function to set the datasource, response ha
 @(select :foo (where (= key 1)))
 ```
 
-The data source can be defined using a binding (with-data-source) or globally using set-datasource!, same is true for the result-decoder type (defaults to server-schema, can be added to the query definition, bound, or set globally with set-decoder-type!)
+The data source can be defined "inline", using a binding (with-data-source), or globally using set-datasource!, same is true for the result-decoder type (defaults to server-schema, can be added to the query definition, bound, or set globally with set-decoder-type!)
 
 ```clojure
 (set-data-source! {:host "localhost"
