@@ -80,8 +80,8 @@
 (deftest insert-query
   (is (= ["INSERT INTO foo (key, bar, alpha) VALUES (?, ?, ?) USING CONSISTENCY QUORUM and TIMESTAMP ? and TTL ?" [123 "baz" "beta" 123123 123]]
         (insert :foo
-                (= key 123)
-                (values {:bar "baz"
+                (values {:key 123
+                         :bar "baz"
                          :alpha "beta"})
                 (using  :consistency :QUORUM
                         :timestamp 123123
@@ -94,7 +94,7 @@
                   (using  :consistency :QUORUM
                           :timestamp 123123
                           :TTL 123)
-                  (values
+                  (set
                    {:col1 "value1"
                     :col2 "value2"}))))
 
@@ -104,7 +104,7 @@
                  (using  :consistency :QUORUM
                          :timestamp 123123
                          :TTL 123)
-                 (values
+                 (set
                   {:col1 "value1"
                    :col2 "value2"
                    :col3 (+ 100)})))))

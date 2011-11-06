@@ -83,24 +83,24 @@
 
 ;; CQL Query translation
 
-(defmulti translate (fn [token value] token))
+(defmulti emit (fn [token value] token))
 
-(defmethod translate :column-family
+(defmethod emit :column-family
   [_ column-family]
   (encode column-family))
 
-(defmethod translate :fields
+(defmethod emit :fields
   [_ args]
   (let [[columns opts] (if (or (vector? (first args))
                                (map? (first args)))
                          [(first args) (rest args)]
                          [nil args])]
-    (->> [(when (seq opts) (translate :fields-options (apply array-map opts)))
-          (when (seq columns) (translate :fields-value columns))]
+    (->> [(when (seq opts) (emit :fields-options (apply array-map opts)))
+          (when (seq columns) (emit :fields-value columns))]
          (filter identity)
          join-spaced)))
 
-(defmethod translate :fields-value
+(defmethod emit :fields-value
   [_ value]
   (if (map? value)
     (let [range (:range value)]
@@ -109,18 +109,18 @@
               (-> range second encode)))
     (join-coma (map encode value))))
 
-(defmethod translate :fields-options
+(defmethod emit :fields-options
   [_ opts]
-  (join-spaced (filter identity (map #(apply translate %) opts))))
+  (join-spaced (filter identity (map #(apply emit %) opts))))
 
-(defmethod translate :first [_ first]
+(defmethod emit :first [_ first]
   (when first (str "FIRST " first)))
 
-(defmethod translate :reversed
+(defmethod emit :reversed
   [_ reversed]
   (when reversed "REVERSED"))
 
-(defmethod translate :using
+(defmethod emit :using
   [_ args]
   (str "USING "
        (join-and
@@ -128,7 +128,7 @@
           (str (-> n name upper-case)
                " " (encode value))))))
 
-(defmethod translate :where
+(defmethod emit :where
   [_ where]
   (->> where
        flatten-seq
@@ -136,45 +136,45 @@
        (cons "WHERE")
        join-spaced))
 
-(defmethod translate :insert-values [_ {:keys [row values]}]
+(defmethod emit :values [_ values]
   (format "%s VALUES %s"
-         (->> values keys (cons (second row)) encode)
-         (->> values vals (cons (last row)) encode)))
+         (-> values keys encode)
+         (-> values vals encode)))
 
-(defmethod translate :set [_ values]
+(defmethod emit :set [_ values]
   (str "SET "
        (->> (map (fn [[k v]]
                    (if (seq? v) ;; counter
-                     (translate :counter [k v])
+                     (emit :counter [k v])
                      (format "%s = %s"
                              (encode k)
                              (encode v))))
                  values)
             join-coma)))
 
-(defmethod translate :counter [_ [field-name [op value]]]
+(defmethod emit :counter [_ [field-name [op value]]]
   (format "%s = %s %s %s"
           (encode field-name)
           (encode field-name)
           op
           (encode value)))
 
-(defmethod translate  :limit
+(defmethod emit  :limit
   [_ limit]
   (str "LIMIT " limit))
 
-(defmethod translate :queries [_ queries]
+(defmethod emit :queries [_ queries]
   (join ";" queries))
 
 (defn make-query
-  [template query]
+  [query-map]
   (binding [*params* (atom [])]
     [(->> (map (fn [token]
                  (if (string? token)
                    token
-                   (when-let [value (token query)]
-                     (translate token value))))
-               template)
+                   (when-let [value (token query-map)]
+                     (emit token value))))
+               (:template query-map))
           (filter identity)
           join-spaced)
      @*params*]))

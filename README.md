@@ -104,8 +104,8 @@ and more...
 
 ```clojure
 (insert :foo
-         (= key 123)
-         (values {:bar "baz"
+         (values {:key 123
+                  :bar "baz"
                   :alpha "beta"})
          (using  :consistency :QUORUM
                  :timestamp 123123
@@ -120,7 +120,7 @@ and more...
         (using  :consistency :QUORUM
                 :timestamp 123123
                 :TTL 123)
-        (values
+        (set
          {:col1 "value1"
           :col2 "value2"}))
 
@@ -131,7 +131,7 @@ and more...
 ;; Update/increase with counter + regular columns
 (update :foo
         (where (= :pkalias 1))
-        (values
+        (set
           {:col1 "value1"
            :col2 "value2"
            :col3 (+ 100)}))
@@ -154,6 +154,25 @@ Parameterization is done depending on the type of the argument, it is considered
 
 More details about query formats [here](https://github.com/mpenet/thera/blob/master/test/thera/test/query.clj)
 
+
+### Composable
+
+```clojure
+(def base-query (-> (select* :foo)
+                    (where (= key 1))
+                    (using :consistency :quorum)))
+
+(println (make base-query))
+=> [SELECT * FROM foo WHERE key = ? USING CONSISTENCY quorum [1]]
+
+(println (-> base-query
+             (where (= key 2))
+             make))
+=> [SELECT * FROM foo WHERE key = ? USING CONSISTENCY quorum [2]]
+
+(println (thera.cql/make-query base-query))
+
+```
 
 ## CLIENT
 
