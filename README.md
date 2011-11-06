@@ -12,7 +12,7 @@ I didn't want to reinvent the wheel using Thrift since a
 number of Thrift based clients for clojure already exist.
 
 Cassandra maintainers wrote that removing Thrift as a requirement is a
-longer-term goal, so using CQL seemed like a reasonable idea.
+longer-term goal, so using CQL/jdbc seemed like a reasonable idea.
 
 This is also the occasion to have some fun with a DSL, Cassandra
 capabilities, and help the Cassandra maintainers finding/fixing bugs
