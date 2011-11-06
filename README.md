@@ -171,9 +171,8 @@ More details about query formats [here](https://github.com/mpenet/thera/blob/mas
 
 ## CLIENT
 
-It uses Cassandra Jdbc driver and provides the basic building blocks to
-something more idiomatic that will come later.
-
+It uses Cassandra Jdbc driver under the hood.
+It only requires to know a couple of function to set the datasource, response handling and executes when the query is de-referenced using "deref" or @.
 
 ```clojure
 (use 'thera.core)
@@ -187,8 +186,8 @@ The data source can be defined using a binding thera.core/*data-source* or globa
 
 ```clojure
 (set-data-source! {:host "localhost"
-                       :port 9160
-                       :keyspace "thera"})
+                   :port 9160
+                   :keyspace "thera"})
 
 (set-decoder-type! :server-schema)
 
@@ -197,7 +196,7 @@ The data source can be defined using a binding thera.core/*data-source* or globa
 
 ```clojure
 @(select :sample1 (where (= key 1))
-                  (data-source  {:host "localhost"
+                  (data-source {:host "localhost"
                                 :port 9160
                                 :keyspace "thera"}))
 ```
@@ -210,8 +209,10 @@ The data source can be defined using a binding thera.core/*data-source* or globa
   @(select :sample1 (where (= key 1))))
 ```
 
-;; Low level api
 
+You can still use the low level client API if needed.
+
+```clojure
 (use 'thera.client)
 (use 'thera.core)
 
