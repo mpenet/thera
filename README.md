@@ -169,9 +169,6 @@ More details about query formats [here](https://github.com/mpenet/thera/blob/mas
              (where (= key 2))
              make))
 => [SELECT * FROM foo WHERE key = ? USING CONSISTENCY quorum [2]]
-
-(println (thera.cql/make-query base-query))
-
 ```
 
 ## CLIENT
