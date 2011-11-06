@@ -1,29 +1,33 @@
 # Thera
 
-Extensible Cassandra CQL DSL + Client with Schema support.
+Extensible Cassandra Client with schema support.
 
-It is a work in progress, expect bugs, missing features and headaches.
+It is a work in progress.
 
 ## Goal / Why
 
-Provide a CQL based client for Cassandra, without having to deal with
-Thrift history from the java client libraries out there (the Cassandra
-maintainers said that removing Thrift as a requirement is a
-longer-term goal).
+Provide a CQL based client for Cassandra/Clojure.
+
+I didn't want to reinvent the wheel using Thrift since a
+number of Thrift based clients for clojure already exist.
+
+Cassandra maintainers wrote that removing Thrift as a requirement is a
+longer-term goal, so using CQL seemed like a reasonable idea.
 
 This is also the occasion to have some fun with a DSL, Cassandra
 capabilities, and help the Cassandra maintainers finding/fixing bugs
 at this early stage of CQL.
 
-It is worth noting that CQL is quite young and doens't support 100% of
-cassandra current features, ex: no support for super columns, but
-compound columns will be available in the (hopefully near) future and
-should be better in this regard, instead of a two-deep structure, you
-can have one of arbitrary depth.
+It is worth noting that CQL is quite young and does not support 100% of
+cassandra current features.
+Ex: no support for super columns, but compound columns will be
+available in the (hopefully near) future and should be better in this
+regard, instead of a two-deep structure, you will have one of arbitrary
+depth.
 
 ## Example
 
-### A simple query would look like this
+### A simple query (and its execution) would look like this
 
 ```clojure
 @(select :foo (where (= key "bar")))
@@ -41,7 +45,7 @@ And its response
    :meta #<CResultSetMetaData org.apache.cassandra.cql.jdbc.CResultSet$CResultSetMetaData@1bb5d53a>}
 ```
 
-## Usage
+## Query definition
 
 ### SELECT
 
@@ -202,7 +206,7 @@ It only requires to know a couple of function to set the datasource, response ha
 @(select :foo (where (= key 1)))
 ```
 
-The data source can be defined using a binding thera.core/*data-source* or globally using set-datasource!, same is true for the result-decoder type (defaults to server-schema, can be added to the query definition, bound, or set globally with set-decoder-type!)
+The data source can be defined using a binding (with-data-source) or globally using set-datasource!, same is true for the result-decoder type (defaults to server-schema, can be added to the query definition, bound, or set globally with set-decoder-type!)
 
 ```clojure
 (set-data-source! {:host "localhost"
@@ -252,8 +256,7 @@ You can still use the low level client API if needed.
         {:name "birthdate", :value 120976}
         {:name "id", :value #<UUID 1438fc5c-4ff6-11e0-b97f-0026c650d722>}
         {:name "username", :value "mpenet"})}],
-     :meta
-     #<CResultSetMetaData org.apache.cassandra.cql.jdbc.CResultSet$CResultSetMetaData@1bb5d53a>}
+     :meta #<CResultSetMetaData org.apache.cassandra.cql.jdbc.CResultSet$CResultSetMetaData@1bb5d53a>}
 ```
 
 There are 3 decoder availables at the moment:
