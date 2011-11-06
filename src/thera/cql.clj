@@ -42,6 +42,7 @@
 (def join-and (partial join " and "))
 (def join-spaced (partial join " "))
 (def join-coma (partial join ", "))
+(def format-eq (partial format "%s = %s"))
 
 (defn flatten-seq
   "Same as flatten, but ignores vectors"
@@ -69,9 +70,7 @@
   (encode [value]
     (->> value
          (map (fn [[k v]]
-                (format "%s = %s"
-                        (encode k)
-                        (encode v))))
+                (format-eq (encode k) (encode v))))
          join-coma))
 
   java.lang.Object
@@ -146,19 +145,15 @@
        (->> (map (fn [[k v]]
                    (if (seq? v) ;; counter
                      (emit :counter [k v])
-                     (format "%s = %s"
-                             (encode k)
-                             (encode v))))
+                     (format-eq (encode k) (encode v))))
                  values)
             join-coma)))
 
 (defmethod emit :counter
   [_ [field-name [op value]]]
-  (format "%s = %s %s %s"
-          (encode field-name)
-          (encode field-name)
-          op
-          (encode value)))
+  (format-eq (encode field-name)
+             (join-spaced [(encode field-name)
+                           op (encode value)])))
 
 (defmethod emit  :limit
   [_ limit]
