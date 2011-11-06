@@ -33,9 +33,7 @@
    'in 'thera.cql/in*
    'key :key})
 
-(defn apply-transforms
-  [form]
-  (walk/prewalk-replace predicates form))
+(def apply-transforms (partial walk/prewalk-replace predicates))
 
 (def fns {:count-fn "count()"})
 
