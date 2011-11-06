@@ -27,114 +27,112 @@ can have one of arbitrary depth.
 
 ```clojure
 ;; Simple key lookup
-(select :foo (where (= key "bar")))
+(as-cql (select :foo (where (= key "bar"))))
 
 => ["SELECT * FROM foo WHERE key = ?" ["bar"]]
 ```
 
 ```clojure
 ;; Query for list of keys
-(select :foo (where (in :keyalias [1 2 (str "ba" "z") :bar])))))
+(as-cql (select :foo (where (in :keyalias [1 2 (str "ba" "z") :bar]))))))
 
 => ["SELECT * FROM foo WHERE keyalias in (?, ?, ?, bar)" [1 2 "baz"]]
 ```
 
 ```clojure
 ;; Range of keys
-(select :foo (where (and (> key 1) (<= key 2))))
+(as-cql (select :foo (where (and (> key 1) (<= key 2)))))
 
 => ["SELECT * FROM foo WHERE key > ? and key <= ?" [1 2]]
 ```
 
 ```clojure
 ;; Key + column index
-(select :foo
+(as-cql
+  (select :foo
      (where
       (and
        (= key :foo)
        (> :name 1)
        (= :pwd "password")
-       (= :gender "male"))))
+       (= :gender "male")))))
 
 => ["SELECT * FROM foo WHERE key = foo and name > ? and pwd = ? and gender = ?" [1 "password" "male"]]
 ```
 
 ```clojure
 ;; Field selection
-(select :foo (fields [:bar "baz"]))
+(as-cql (select :foo (fields [:bar "baz"])))
 
 =>  ["SELECT bar, ? FROM foo" ["baz"]]
 ```
 
 ```clojure
 ;; Field N range
-(select :foo (fields :reversed true
-                     :first 100))
+(as-cql (select :foo (fields :reversed true
+                             :first 100)))
 
 => "SELECT REVERSED FIRST 100 FROM foo"
 ```
 
 ```clojure
 ;; Column range
-(select :foo (fields (as-range :a :b)))
+(as-cql (select :foo (fields (as-range :a :b))))
 
 => ["SELECT a...b FROM foo" []]
 ```
 
 ```clojure
 ;; Passing additional options (valid for any query type)
-(select :foo (using :consistency :QUORUM
-                    :timestamp 123123
-                    :TTL 123))
+(as-cql (select :foo (using :consistency :QUORUM
+                            :timestamp 123123
+                            :TTL 123)))
 => ["SELECT * FROM foo USING CONSISTENCY QUORUM and TIMESTAMP ? and TTL ?" [123123 123]]
 ```
 
 
 ```clojure
 ;; Functions
-(select :foo (fields [:count-fn]))
+(as-cql (select :foo (fields [:count-fn])))
 
 => ["SELECT count() FROM foo" []]
 ```
 
-and more...
-
-
 ### INSERT
 
 ```clojure
-(insert :foo
-         (values {:key 123
-                  :bar "baz"
-                  :alpha "beta"})
-         (using  :consistency :QUORUM
-                 :timestamp 123123
-                 :TTL 123))
+(as-cql (insert :foo
+          (values {:key 123
+                   :bar "baz"
+                   :alpha "beta"})
+          (using  :consistency :QUORUM
+                  :timestamp 123123
+                  :TTL 123)))
 => ["INSERT INTO foo (key, bar, alpha) VALUES (?, ?, ?) USING CONSISTENCY QUORUM and TIMESTAMP ? and TTL ?" [123 "baz" "beta" 123123 123]]
 ```
 
 ### UPDATE
 ```clojure
-(update :foo
-        (where (= :keyalias 1))
-        (using  :consistency :QUORUM
-                :timestamp 123123
-                :TTL 123)
-        (set
-         {:col1 "value1"
-          :col2 "value2"}))
+(as-cql (update :foo
+                (where (= :keyalias 1))
+                (using  :consistency :QUORUM
+                        :timestamp 123123
+                        :TTL 123)
+                (set
+                 {:col1 "value1"
+                  :col2 "value2"})))
 
 => ["UPDATE foo USING CONSISTENCY QUORUM and TIMESTAMP ? and TTL ? SET col1 = ?, col2 = ? WHERE keyalias = ?" [123123 123 "value1" "value2" 1]]
 ```
 
 ```clojure
 ;; Update/increase with counter + regular columns
-(update :foo
-        (where (= :pkalias 1))
-        (set
-          {:col1 "value1"
-           :col2 "value2"
-           :col3 (+ 100)}))
+(as-cql (update :foo
+                (where (= :pkalias 1))
+                (set
+                  {:col1 "value1"
+                   :col2 "value2"
+                   :col3 (+ 100)})))
 
 => ["UPDATE foo SET col1 = ?, col2 = ?, col3 = col3 + ? WHERE pkalias = ?" ["value1" "value2" 100 1]]
 ```
@@ -142,10 +140,10 @@ and more...
 ### DELETE
 
 ```clojure
-(delete :foo
-        (fields [:a :b])
-        (where (= :pkalias 1))
-        (using  :consistency :QUORUM))
+(as-cql (delete :foo
+                (fields [:a :b])
+                (where (= :pkalias 1))
+                (using  :consistency :QUORUM)))
 
 => ["DELETE a, b FROM foo USING CONSISTENCY QUORUM WHERE pkalias = ?" [1]]
 ```
@@ -158,16 +156,16 @@ More details about query formats [here](https://github.com/mpenet/thera/blob/mas
 ### Composable
 
 ```clojure
-(def base-query (-> (select* :foo)
+(def base-query (-> (select :foo)
                     (where (= key 1))
                     (using :consistency :quorum)))
 
-(println (make base-query))
+(as-cql (make base-query))
 => [SELECT * FROM foo WHERE key = ? USING CONSISTENCY quorum [1]]
 
-(println (-> base-query
-             (where (= key 2))
-             make))
+(-> base-query
+   (where (= key 2))
+   as-cql))
 => [SELECT * FROM foo WHERE key = ? USING CONSISTENCY quorum [2]]
 ```
 
@@ -178,7 +176,44 @@ something more idiomatic that will come later.
 
 
 ```clojure
+(use 'thera.core)
+
+;; deref executes the query
+
+@(select :foo (where (= key 1)))
+```
+
+The data source can be defined using a binding thera.core/*data-source* or globally using set-datasource!, same is true for the result-decoder type (defaults to server-schema, can be added to the query definition, bound, or set globally with set-decoder-type!)
+
+```clojure
+(set-data-source! {:host "localhost"
+                       :port 9160
+                       :keyspace "thera"})
+
+(set-decoder-type! :server-schema)
+
+@(select :sample1 (where (= key 1)))
+```
+
+```clojure
+@(select :sample1 (where (= key 1))
+                  (data-source  {:host "localhost"
+                                :port 9160
+                                :keyspace "thera"}))
+```
+
+```clojure
+(def ds (client/make-datasource {:host "localhost"
+                                 :port 9160
+                                 :keyspace "thera"}))
+(with-data-source ds
+  @(select :sample1 (where (= key 1))))
+```
+
+;; Low level api
+
 (use 'thera.client)
+(use 'thera.core)
 
 (def cql-q (select :foo (where (= key (java.util.UUID/fromString "1438fc5c-4ff6-11e0-b97f-0026c650d722")))))
 

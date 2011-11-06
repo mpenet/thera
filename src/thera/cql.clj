@@ -160,14 +160,14 @@
   (str "LIMIT " limit))
 
 (defn make-query
-  [query-map]
+  [template query-map]
   (binding [*params* (atom [])]
     [(->> (map (fn [token]
                  (if (string? token)
                    token
                    (when-let [value (token query-map)]
                      (emit token value))))
-               (:template query-map))
+               template)
           (filter identity)
           join-spaced)
      @*params*]))
