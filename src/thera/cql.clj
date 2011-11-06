@@ -11,15 +11,14 @@
 
 ;; CQL special functions and operators
 
-(defmacro definfix [op]
-  `(defn ~(-> op (str "*") symbol) [& args#]
-     (interpose ~(keyword op) args#)))
+(defmacro definfix [& ops]
+  `(do
+     ~@(doall
+        (for [op# ops]
+          `(defn ~(-> op# (str "*") symbol) [& args#]
+             (interpose ~(keyword op#) args#))))))
 
-(defmacro definfixn [& ops]
-  `(do ~@(doall (for [op# ops]
-                  `(definfix ~op#)))))
-
-(definfixn and or = - + < > <= >= in)
+(definfix and or = - + < > <= >= in)
 
 (def predicates
   {'- 'thera.cql/-*
