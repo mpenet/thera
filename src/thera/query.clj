@@ -1,7 +1,7 @@
 (ns thera.query
   "Simple DSL to generate Cassandra CQL queries
    https://github.com/apache/cassandra/blob/trunk/doc/cql/CQL.textile"
-  ;; (:refer-clojure :exclude [set])
+  (:refer-clojure :exclude [set])
   (:require [thera.cql :as cql]))
 
 (def make cql/make-query)
@@ -56,9 +56,6 @@
 
 (defn limit [q n]
   (assoc q :limit n))
-
-(defn pk [q n]
-  (assoc q :pk n))
 
 (defmacro where [q args]
   `(assoc ~q :where ~(cql/apply-transforms args)))

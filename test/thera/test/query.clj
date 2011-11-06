@@ -1,4 +1,5 @@
 (ns thera.test.query
+  (:refer-clojure :exclude [set])
   (:use [clojure.test]
         [thera.query]))
 
