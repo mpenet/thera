@@ -156,7 +156,7 @@ And its response
                 (set
                   {:col1 "value1"
                    :col2 "value2"
-                   :col3 (+ 100)})))
+                   :col3 (+= 100)})))
 
 => ["UPDATE foo SET col1 = ?, col2 = ?, col3 = col3 + ? WHERE pkalias = ?" ["value1" "value2" 100 1]]
 ```
