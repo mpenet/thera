@@ -110,12 +110,13 @@
   [_ opts]
   (join-spaced (filter identity (map #(apply emit %) opts))))
 
-(defmethod emit :first [_ first]
-  (when first (str "FIRST " first)))
+(defmethod emit :first
+  [_ first]
+  (str "FIRST " first))
 
 (defmethod emit :reversed
   [_ reversed]
-  (when reversed "REVERSED"))
+  "REVERSED")
 
 (defmethod emit :using
   [_ args]
@@ -133,12 +134,14 @@
        (cons "WHERE")
        join-spaced))
 
-(defmethod emit :values [_ values]
+(defmethod emit :values
+  [_ values]
   (format "%s VALUES %s"
          (-> values keys encode)
          (-> values vals encode)))
 
-(defmethod emit :set [_ values]
+(defmethod emit :set
+  [_ values]
   (str "SET "
        (->> (map (fn [[k v]]
                    (if (seq? v) ;; counter
@@ -149,7 +152,8 @@
                  values)
             join-coma)))
 
-(defmethod emit :counter [_ [field-name [op value]]]
+(defmethod emit :counter
+  [_ [field-name [op value]]]
   (format "%s = %s %s %s"
           (encode field-name)
           (encode field-name)
@@ -159,9 +163,6 @@
 (defmethod emit  :limit
   [_ limit]
   (str "LIMIT " limit))
-
-(defmethod emit :queries [_ queries]
-  (join ";" queries))
 
 (defn make-query
   [query-map]
