@@ -276,8 +276,6 @@ Defaults to :bytes
 
 ## TODO
 
-* composable (read non macro version) of base cql verbs with attributes merging
-
 * DDL (CREATE, ALTER, TRUNCATE, DROP)
 
 * Higher level api for Schema based use (CRUD and later Schema syncronisation with server)
