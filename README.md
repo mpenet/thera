@@ -180,7 +180,7 @@ More details about query formats [here](https://github.com/mpenet/thera/blob/mas
                     (where (= key 1))
                     (using :consistency :quorum)))
 
-(as-cql (make base-query))
+(as-cql base-query)
 => [SELECT * FROM foo WHERE key = ? USING CONSISTENCY quorum [1]]
 
 (-> base-query
