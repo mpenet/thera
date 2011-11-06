@@ -30,15 +30,15 @@ can have one of arbitrary depth.
 ```
 
 And its response
+
 ```clojure
-=>  {:rows
-     [{:id "bar"
-       :cols
-       ({:name "age", :value 35}
-        {:name "birthdate", :value 120976}
-        {:name "username", :value "mpenet"})}],
-     :meta
-     #<CResultSetMetaData org.apache.cassandra.cql.jdbc.CResultSet$CResultSetMetaData@1bb5d53a>}
+{:rows
+   [{:id "bar"
+     :cols
+     ({:name "age", :value 35}
+      {:name "birthdate", :value 120976}
+      {:name "username", :value "mpenet"})}],
+   :meta #<CResultSetMetaData org.apache.cassandra.cql.jdbc.CResultSet$CResultSetMetaData@1bb5d53a>}
 ```
 
 ## Usage
