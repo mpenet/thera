@@ -167,3 +167,6 @@
 (defmethod decode-result :default
   [^CResultSet rs _ & args]
   (decode-result rs :server-schema args))
+
+(defn decodable? [response]
+  (= (type response) CResultSet))

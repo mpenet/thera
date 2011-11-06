@@ -71,13 +71,16 @@
 
   clojure.lang.IDeref
   (deref [this]
-    (let [generated-q (as-cql this)]
-      (-> data-source
-          client/get-connection
-          (client/prepare-statement (generated-q 0))
-          (client/bind-parameters (generated-q 1))
-          client/execute
-          (client/decode-result decoder-type)))))
+    (let [generated-q (as-cql this)
+          response  (-> data-source
+                        client/get-connection
+                        (client/prepare-statement (generated-q 0))
+                        (client/bind-parameters (generated-q 1))
+                        client/execute)]
+      ;; only decode when we have a ResultSet
+      (if (client/decodable? response)
+        (client/decode-result response decoder-type)
+        response))))
 
 ;; verbs
 
