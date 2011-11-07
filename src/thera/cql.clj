@@ -118,7 +118,9 @@
 
 (defmethod emit :fields-options
   [_ opts]
-  (join-spaced (filter identity (map #(apply emit %) opts))))
+  (->> (map #(apply emit %) opts)
+       (filter identity)
+       join-spaced))
 
 (defmethod emit :first
   [_ first]
@@ -130,11 +132,11 @@
 
 (defmethod emit :using
   [_ args]
-  (str "USING "
-       (join-and
-        (for [[n value] (partition 2 args)]
+  (->> (for [[n value] (partition 2 args)]
           (str (-> n name upper-case)
-               " " (encode value))))))
+               " " (encode value)))
+       join-and
+       (str "USING ")))
 
 (defmethod emit :where
   [_ where]
@@ -152,13 +154,13 @@
 
 (defmethod emit :set
   [_ values]
-  (str "SET "
-       (->> (map (fn [[k v]]
-                   (if (vector? v) ;; counter
-                     (emit :counter [k v])
-                     (format-eq (encode k) (encode v))))
-                 values)
-            join-coma)))
+  (->> (map (fn [[k v]]
+              (if (vector? v) ;; counter
+                (emit :counter [k v])
+                (format-eq (encode k) (encode v))))
+            values)
+       join-coma
+       (str "SET ")))
 
 (defmethod emit :counter
   [_ [field-name [op value]]]

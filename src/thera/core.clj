@@ -64,7 +64,6 @@
   (as-cql [this]))
 
 (defrecord Query [template query data-source decoder-type]
-
   PQuery
   (as-cql [this]
     (cql/make-query template (:query this)))
@@ -97,8 +96,7 @@
 (defmacro delete [cf & steps]
   `(-> (delete* ~cf) ~@steps))
 
-(defn select*
-  [cf]
+(defn select* [cf]
   (Query. ["SELECT" :fields "FROM" :column-family :where :using :limit]
           {:column-family cf
            :fields [[:*]]}
