@@ -332,6 +332,8 @@ Defaults to :bytes
 
 ## TODO
 
+* ALTER command
+
 * Schema syncronisation
 
 * Proper documentation/tests.
