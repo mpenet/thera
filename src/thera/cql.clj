@@ -92,10 +92,6 @@
 
 (defmulti emit (fn [token value] token))
 
-(defmethod emit :column-family
-  [_ column-family]
-  (encode column-family))
-
 (defmethod emit :fields
   [_ args]
   (let [[columns opts] (if (or (vector? (first args))
@@ -169,9 +165,33 @@
                            (encode op)
                            (encode value)])))
 
-(defmethod emit  :limit
+(defmethod emit :with
+  [_ value-map]
+  (->> (for [[k v] value-map]
+         (format-eq (encode k) (encode v)))
+       join-and
+       (str "WITH ")))
+
+(defmethod emit :defs
+  [_ values]
+  ;; if we have a pk put it first and prepare val for encode'
+  (->> (when-let [pk (:pk values)]
+         ;; FIXME ugliness (but safe at least)
+         (if (= 1 (count pk))
+           {:KEY  (-> pk first name (str " PRIMARY KEY") keyword)}
+           {(first pk) (-> pk second name (str " PRIMARY KEY") keyword)}))
+       (conj (dissoc values :pk))
+       (map (fn [[k v]] (str (encode k) " " (encode v))))
+       join-coma
+       (format "(%s)")))
+
+(defmethod emit :limit
   [_ limit]
   (str "LIMIT " limit))
+
+(defmethod emit :default
+  [_ scope]
+  (encode scope))
 
 (defn make-query
   [template query-map]

@@ -117,19 +117,35 @@
                        (where (= :pk-alias 1))
                        (using  :consistency :QUORUM))))))
 
+(deftest truncate-query
+  (is (= ["TRUNCATE foo" []]
+         (as-cql (truncate :foo)))))
 
-;; (deftest batch-query
-;;   (is (= "BATCH BEGIN\n SELECT * FROM foo;INSERT INTO foo (key, bar, alpha) VALUES (123, 'baz', 'beta') USING CONSISTENCY QUORUM and TIMESTAMP 123123 and TTL 123;DELETE a, b FROM foo USING CONSISTENCY QUORUM WHERE pk-alias = 1 \nAPPLY BATCH"
-;;          (batch
-;;           (select :foo)
-;;           (insert :foo
-;;                   (= key 123)
-;;                   (values {:bar "baz"
-;;                            :alpha "beta"})
-;;                   (using  :consistency :QUORUM
-;;                           :timestamp 123123
-;;                           :TTL 123))
-;;           (delete :foo
-;;                   (fields [:a :b])
-;;                   (where (= pk-alias 1))
-;;                   (using  :consistency :QUORUM))))))
+(deftest create-query
+  (is (= ["CREATE KEYSPACE foo WITH strategy_class = foo and strategy_option:replication_factor = bar" []]
+         (as-cql (create-ks :foo
+                         (with {:strategy_class :foo :strategy_option:replication_factor :bar})))))
+
+  (is (= ["CREATE COLUMNFAMILY foo (dwa string PRIMARY KEY, c bytes, a ascii) WITH strategy_class = foo and strategy_option:replication_factor = bar" []]
+      (as-cql (create-cf :foo
+                         (def-pk :dwa :string)
+                         (def-cols {:a :ascii :c :bytes})
+                         (with {:strategy_class :foo :strategy_option:replication_factor :bar})))))
+
+  (is (= ["CREATE COLUMNFAMILY foo (KEY string PRIMARY KEY, c bytes, a ascii) WITH strategy_class = foo and strategy_option:replication_factor = bar" []]
+      (as-cql (create-cf :foo
+                         (def-pk :string)
+                         (def-cols {:a :ascii :c :bytes})
+                         (with {:strategy_class :foo :strategy_option:replication_factor :bar}))))))
+
+
+(deftest index-query
+  (is (= ["CREATE INDEX ON foo ( bar )" []]  (as-cql (create-index :foo :bar))))
+  (is (= ["CREATE INDEX baz ON foo ( bar )" []]   (as-cql (create-index :foo :bar
+                                                                         (index-name :baz)))))
+  (is (= ["DROP INDEX foo" []]  (as-cql (drop-index :foo)))))
+
+
+(deftest drop-query
+  (is (= ["DROP KEYSPACE foo" []] (as-cql (drop-ks :foo))))
+  (is (= ["DROP COLUMNFAMILY foo" []] (as-cql (drop-cf :foo)))))
