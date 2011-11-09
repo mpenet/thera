@@ -332,9 +332,7 @@ Defaults to :bytes
 
 ## TODO
 
-* DDL (CREATE, ALTER, TRUNCATE, DROP)
-
-* Higher level api for Schema based use (CRUD and later Schema syncronisation with server)
+* Schema syncronisation
 
 * Proper documentation/tests.
 
