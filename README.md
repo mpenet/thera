@@ -2,7 +2,7 @@
 
 Extensible Cassandra Client with schema support.
 
-It is a work in progress.
+It is a work in progress and it is not really usable for now. 
 
 ## Goal / Why
 
