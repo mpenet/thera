@@ -2,7 +2,7 @@
 
 Extensible Cassandra Client with schema support.
 
-It is a work in progress and it is not really usable for now. 
+**DEPRECATED use [casyn](https://github.com/mpenet/casyn) instead.**
 
 ## Goal / Why
 
